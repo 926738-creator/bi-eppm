@@ -2,14 +2,17 @@ name: Fetch Sheets Data
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # roda a cada 30 minutos
-  workflow_dispatch:         # permite rodar manualmente também
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Buscar dados do Google Sheets
         run: |
