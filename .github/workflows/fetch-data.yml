@@ -1,0 +1,24 @@
+name: Fetch Sheets Data
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # roda a cada 30 minutos
+  workflow_dispatch:         # permite rodar manualmente também
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Buscar dados do Google Sheets
+        run: |
+          curl -L "${{ secrets.SHEETS_URL }}" -o data.json
+
+      - name: Commit e push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "Atualiza dados"
+          git push
