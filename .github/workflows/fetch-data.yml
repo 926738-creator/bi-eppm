@@ -16,7 +16,7 @@ jobs:
 
       - name: Buscar dados do Google Sheets
         run: |
-          curl -L "${{ secrets.SHEETS_URL }}" -o data.json
+          curl -L "${{ secrets.SHEETS_URL }}" -o data.csv
 
       - name: Commit e push
         run: |
