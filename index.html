@@ -675,14 +675,14 @@
             <tr>
               <th>Ano</th>
               <th>Programa</th>
-              <th>Nº TA</th>
+              <th>TA</th>
               <th>Descrição do Projeto</th>
               <th>Objeto</th>
-              <th>Valor (R$)</th>
+              <th>Valor SENASP</th>
               <th>Aplicação</th>
-              <th>Etapa</th>
+              <th>Marco</th>
+              <th>SGP-e Execução</th>
               <th>Último Report</th>
-              <th>Status</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -700,7 +700,7 @@
 
 <script>
 // ═══════════════════════════════════════════ CONFIG
-const CSV_URL = "https://raw.githubusercontent.com/926738-creator/bi-eppm/main/data.csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcWJDXq8dlcN2BbwTKm6dGepXRf-pctZuAnktFGIdTH4CDi6s6b5fX6P6A_z46Qg/pub?gid=1744861377&single=true&output=csv";
 
 const PROG_COLORS = {
   EVM:  '#4b9fe8',
@@ -853,12 +853,13 @@ const COL_MAP = {
   objetoProjeto:['objeto do projeto'],
   anoEntrega:   ['ano entrega'],
   valorPlan:    ['valor planejado'],
-  sgpeExec:     ['sgp-e execução', 'sgpe execução', 'sgp-e execucao'],
+  sgpeExec:     ['sgp-e execução', 'sgpe execução', 'sgp-e execucao', 'sgpe execucao'],
   objetoExec:   ['objeto executado'],
+  modalidade:   ['modalidade de contratação', 'modalidade de contratacao', 'modalidade'],
   valorExec:    ['valor executado'],
   anoExec:      ['ano da execução', 'ano da execucao'],
   sgpeStatus:   ['sgpe status report', 'status report sgpe'],
-  cronograma:   ['cronograma'],
+  marco:        ['cronograma', 'marco'],
   ultimoReport: ['último report (data)', 'ultimo report (data)', 'último report', 'ultimo report'],
   statusReport: ['status report'],
 };
@@ -875,6 +876,10 @@ function buildColIndex(headerRow) {
       const found = normalized.findIndex(h => h === normVariant || h.includes(normVariant));
       if (found !== -1) { idx[field] = found; break; }
     }
+  }
+  // sgpeLink: coluna sem cabeçalho imediatamente após SGP-e Execução
+  if (idx.sgpeExec !== undefined) {
+    idx.sgpeLink = idx.sgpeExec + 1;
   }
   return idx;
 }
@@ -914,6 +919,7 @@ function processData(rows) {
     const prog = get(r, 'programa');
     if (!prog || prog.length > 10) continue;
 
+    const marcoRaw = get(r, 'marco');
     rawData.push({
       ano:          anoNum,
       programa:     prog.toUpperCase(),
@@ -929,11 +935,14 @@ function processData(rows) {
       anoEntrega:   get(r, 'anoEntrega'),
       valorPlan:    parseBRL(get(r, 'valorPlan')),
       sgpeExec:     get(r, 'sgpeExec'),
+      sgpeLink:     colIdx.sgpeLink !== undefined ? String(r[colIdx.sgpeLink] || '').trim() : '',
       objetoExec:   get(r, 'objetoExec'),
+      modalidade:   get(r, 'modalidade'),
       valorExec:    parseBRL(get(r, 'valorExec')),
       anoExec:      get(r, 'anoExec'),
       sgpeStatus:   get(r, 'sgpeStatus'),
-      cronograma:   get(r, 'cronograma'),
+      marco:        marcoRaw,
+      statusMarco:  classifyMarco(marcoRaw),
       ultimoReport: get(r, 'ultimoReport'),
       statusReport: get(r, 'statusReport'),
     });
@@ -959,6 +968,16 @@ function processData(rows) {
   // Show record count in badge
   const badge = document.querySelector('.title-badge span:last-child');
   if (badge) badge.textContent = `${rawData.length} projetos carregados · Fonte: Planilha FESP`;
+}
+
+// ═══════════════════════════════════════════ MARCO CLASSIFIER
+function classifyMarco(m) {
+  if (!m) return 'A iniciar';
+  const s = m.trim().toLowerCase();
+  if (s === 'projeto cancelado' || s === 'cancelado') return 'Cancelado';
+  if (s === 'projeto não iniciado' || s === 'a iniciar') return 'A iniciar';
+  if (s.includes('encerramento') || s.includes('m19') || s.includes('12)')) return 'Encerrado';
+  return 'Iniciado';
 }
 
 // ═══════════════════════════════════════════ ROBUST NUMBER PARSER
@@ -991,11 +1010,11 @@ function parseBRL(raw) {
 function populateFilters() {
   const programas = [...new Set(rawData.map(d => d.programa).filter(Boolean))].sort();
   const anos      = [...new Set(rawData.map(d => d.ano).filter(Boolean))].sort();
-  const etapas    = [...new Set(rawData.map(d => d.cronograma).filter(Boolean))].sort();
+  const status    = ['A iniciar', 'Iniciado', 'Encerrado', 'Cancelado'];
 
   fillSelect('filterPrograma', programas, 'Todos os programas');
   fillSelect('filterAno', anos, 'Todos os anos');
-  fillSelect('filterEtapa', etapas, 'Todas as etapas');
+  fillSelect('filterEtapa', status, 'Todos os status');
 }
 
 function fillSelect(id, values, placeholder) {
@@ -1016,10 +1035,10 @@ function applyFilters() {
   const etapa= document.getElementById('filterEtapa').value;
 
   filteredData = rawData.filter(d =>
-    (!prog  || d.programa  === prog) &&
+    (!prog  || d.programa    === prog) &&
     (!ano   || String(d.ano) === String(ano)) &&
-    (!apl   || d.aplicacao  === apl) &&
-    (!etapa || d.cronograma === etapa)
+    (!apl   || d.aplicacao   === apl) &&
+    (!etapa || d.statusMarco === etapa)
   );
   renderAll();
 }
@@ -1040,21 +1059,29 @@ function renderAll() {
 // ═══════════════════════════════════════════ KPIs
 function renderKPIs() {
   const data = filteredData;
-  const total     = data.length;
-  const totalVal  = data.reduce((s, d) => s + d.valor, 0);
-  const totalPlan = data.filter(d => d.valorPlan > 0).reduce((s, d) => s + d.valorPlan, 0);
-  const execAtivos = data.filter(d => d.cronograma && !d.cronograma.includes('Encerramento') && d.cronograma !== 'Projeto não iniciado').length;
-  const encerrados = data.filter(d => d.cronograma && d.cronograma.includes('Encerramento')).length;
-  const naoInic    = data.filter(d => d.cronograma === 'Projeto não iniciado' || !d.cronograma).length;
-  const programasAtivos = new Set(data.map(d => d.programa).filter(Boolean)).size;
+
+  // Excluir cancelados das métricas principais
+  const ativos    = data.filter(d => d.statusMarco !== 'Cancelado');
+  const cancelados = data.filter(d => d.statusMarco === 'Cancelado');
+
+  const total      = ativos.length;
+  const totalVal   = ativos.reduce((s, d) => s + d.valor, 0);          // Plano SENASP excl. cancelados
+  const totalPago  = ativos.reduce((s, d) => s + d.valorExec, 0);      // Valor Executado excl. cancelados
+  const iniciados  = ativos.filter(d => d.statusMarco === 'Iniciado').length;
+  const encerrados = ativos.filter(d => d.statusMarco === 'Encerrado').length;
+  const aIniciar   = ativos.filter(d => d.statusMarco === 'A iniciar').length;
+  const nCancelados = cancelados.length;
+  const valCancelado = cancelados.reduce((s, d) => s + d.valor, 0);
+  const programasAtivos = new Set(ativos.map(d => d.programa).filter(Boolean)).size;
 
   const kpis = [
-    { label: 'Total de Projetos', value: total, sub: `${programasAtivos} programas ativos`, icon: '📋', accent: '#c9a84c' },
-    { label: 'Valor Total (R$)', value: 'R$ ' + fmtM(totalVal), sub: 'valor comprometido', icon: '💰', accent: '#3dbb77' },
-    { label: 'Valor Planejado', value: 'R$ ' + fmtM(totalPlan), sub: 'valor nos projetos SGP-e', icon: '📊', accent: '#4b9fe8' },
-    { label: 'Em Execução', value: execAtivos, sub: 'projetos ativos', icon: '⚡', accent: '#4b9fe8' },
-    { label: 'Encerrados', value: encerrados, sub: 'projetos concluídos', icon: '✅', accent: '#3dbb77' },
-    { label: 'Não Iniciados', value: naoInic, sub: 'aguardando início', icon: '⏳', accent: '#8a96ab' },
+    { label: 'Total de Projetos', value: total, sub: `${programasAtivos} programas · excl. cancelados`, icon: '📋', accent: '#c9a84c' },
+    { label: 'Valor Total SENASP', value: 'R$ ' + fmtM(totalVal), sub: 'plano de aplicação (excl. cancelados)', icon: '💰', accent: '#3dbb77' },
+    { label: 'Valor Pago', value: totalPago > 0 ? 'R$ ' + fmtM(totalPago) : '–', sub: 'valor executado / pago', icon: '✔', accent: '#3dbb77' },
+    { label: 'Iniciados', value: iniciados, sub: 'projetos em andamento', icon: '⚡', accent: '#4b9fe8' },
+    { label: 'Encerrados', value: encerrados, sub: 'projetos entregues', icon: '✅', accent: '#3dbb77' },
+    { label: 'A Iniciar', value: aIniciar, sub: 'aguardando início', icon: '⏳', accent: '#8a96ab' },
+    { label: 'Cancelados', value: nCancelados, sub: nCancelados > 0 ? '– R$ ' + fmtM(valCancelado) + ' abatidos' : 'nenhum', icon: '✖', accent: '#e05252' },
   ];
 
   document.getElementById('kpiStrip').innerHTML = kpis.map(k => `
@@ -1071,12 +1098,12 @@ function renderKPIs() {
 function renderProgCards() {
   const counts = {};
   const values = {};
-  filteredData.forEach(d => {
+  filteredData.filter(d => d.statusMarco !== 'Cancelado').forEach(d => {
     if (!d.programa) return;
     counts[d.programa] = (counts[d.programa] || 0) + 1;
     values[d.programa] = (values[d.programa] || 0) + d.valor;
   });
-  const total = filteredData.length || 1;
+  const total = filteredData.filter(d => d.statusMarco !== 'Cancelado').length || 1;
 
   document.getElementById('progCards').innerHTML = Object.keys(counts).sort().map(p => `
     <div class="prog-card">
@@ -1231,17 +1258,13 @@ function renderChartEtapa() {
   destroyChart('chartEtapa');
   const counts = {};
   filteredData.forEach(d => {
-    const key = simplifyEtapa(d.cronograma);
+    const key = d.statusMarco || 'A iniciar';
     counts[key] = (counts[key]||0)+1;
   });
-  const labels = Object.keys(counts).sort();
-  const colors = labels.map(l => {
-    if (l.includes('Encerramento') || l.includes('Encerrado')) return '#3dbb77';
-    if (l.includes('Execução') || l.includes('Execucao')) return '#4b9fe8';
-    if (l.includes('Planejamento') || l.includes('Aprovação') || l.includes('Aprovacao')) return '#f0a840';
-    if (l.includes('não iniciado') || l === 'Sem info') return '#8a96ab';
-    return '#c9a84c';
-  });
+  const ORDER = ['Iniciado', 'Encerrado', 'A iniciar', 'Cancelado'];
+  const labels = ORDER.filter(k => counts[k]);
+  const colorMap = { Iniciado: '#4b9fe8', Encerrado: '#3dbb77', 'A iniciar': '#8a96ab', Cancelado: '#e05252' };
+  const colors = labels.map(l => colorMap[l] || '#c9a84c');
   const ctx = document.getElementById('chartEtapa').getContext('2d');
   charts['chartEtapa'] = new Chart(ctx, {
     type: 'bar',
@@ -1312,8 +1335,25 @@ function renderChartValorAno() {
 // ═══════════════════════════════════════════ TABLE
 function renderTable() {
   const tbody = document.getElementById('tableBody');
-  // Show projects with cronograma data (active monitoring)
-  const rows = filteredData.filter(d => d.cronograma || d.statusReport).slice(0, 200);
+  // Exibe apenas Iniciados e Encerrados (exclui Cancelados e A iniciar)
+  const rows = filteredData
+    .filter(d => d.statusMarco === 'Iniciado' || d.statusMarco === 'Encerrado')
+    .slice(0, 200);
+
+  const marcoBadge = m => {
+    const cls = { Iniciado: 'badge-execucao', Encerrado: 'badge-encerrado', 'A iniciar': 'badge-nao-iniciado', Cancelado: 'badge-cancelado' };
+    return `<span class="badge ${cls[m] || 'badge-nao-iniciado'}">${m || '–'}</span>`;
+  };
+  const sgpeCell = d => {
+    if (!d.sgpeExec) return '–';
+    if (d.sgpeLink && d.sgpeLink.startsWith('http')) {
+      return `<a href="${d.sgpeLink}" target="_blank" rel="noopener"
+        style="color:#4b9fe8;text-decoration:none;font-size:11px;white-space:nowrap"
+        title="Abrir no SGP-e">${d.sgpeExec} ↗</a>`;
+    }
+    return `<span style="font-size:11px">${d.sgpeExec}</span>`;
+  };
+
   tbody.innerHTML = rows.map(d => `
     <tr>
       <td>${d.ano || '–'}</td>
@@ -1323,11 +1363,11 @@ function renderTable() {
       <td title="${d.objeto}" style="color:#8a96ab">${trunc(d.objeto, 40)}</td>
       <td style="white-space:nowrap;font-family:'Barlow Condensed',sans-serif;font-size:13px">${fmtBRL(d.valor)}</td>
       <td>${d.aplicacao ? `<span class="badge" style="background:rgba(${d.aplicacao==='Custeio'?'75,159,232':'232,122,75'},0.18);color:${d.aplicacao==='Custeio'?'#4b9fe8':'#e87a4b'};border:1px solid ${d.aplicacao==='Custeio'?'#4b9fe844':'#e87a4b44'}">${d.aplicacao}</span>` : '–'}</td>
-      <td><span class="badge ${badgeClass(d.cronograma)}">${trunc(d.cronograma || 'Sem info', 28)}</span></td>
-      <td style="font-size:11px;color:#8a96ab">${fmtDate(d.ultimoReport)}</td>
-      <td title="${d.statusReport}" style="color:#8a96ab;font-size:11px">${trunc(d.statusReport, 45)}</td>
+      <td>${marcoBadge(d.statusMarco)}</td>
+      <td>${sgpeCell(d)}</td>
+      <td title="${d.statusReport}" style="color:#d8dde8;font-size:11px;max-width:220px;white-space:normal;line-height:1.4">${d.statusReport || '–'}</td>
     </tr>
-  `).join('') || '<tr><td colspan="10" style="text-align:center;color:#8a96ab;padding:24px">Nenhum dado encontrado</td></tr>';
+  `).join('') || '<tr><td colspan="10" style="text-align:center;color:#8a96ab;padding:24px">Nenhum projeto iniciado ou encerrado encontrado</td></tr>';
 }
 
 // ═══════════════════════════════════════════ HELPERS
