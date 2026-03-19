@@ -676,13 +676,12 @@
               <th>Ano</th>
               <th>Programa</th>
               <th>TA</th>
-              <th>Descrição do Projeto</th>
               <th>Objeto</th>
               <th>Valor SENASP</th>
               <th>Aplicação</th>
               <th>Marco</th>
               <th>SGP-e Execução</th>
-              <th>Último Report</th>
+              <th>Status Report</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -871,11 +870,22 @@ function buildColIndex(headerRow) {
     .normalize('NFD').replace(/[\u0300-\u036f]/g, ''));  // strip accents for matching
 
   for (const [field, variants] of Object.entries(COL_MAP)) {
+    let found = -1;
+    // Passagem 1: match exato (evita 'status report' casar com 'sgpe status report')
     for (const variant of variants) {
       const normVariant = variant.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const found = normalized.findIndex(h => h === normVariant || h.includes(normVariant));
-      if (found !== -1) { idx[field] = found; break; }
+      found = normalized.findIndex(h => h === normVariant);
+      if (found !== -1) break;
     }
+    // Passagem 2: match parcial (includes) apenas se exato não encontrou
+    if (found === -1) {
+      for (const variant of variants) {
+        const normVariant = variant.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        found = normalized.findIndex(h => h.includes(normVariant));
+        if (found !== -1) break;
+      }
+    }
+    if (found !== -1) idx[field] = found;
   }
   // sgpeLink: coluna sem cabeçalho imediatamente após SGP-e Execução
   if (idx.sgpeExec !== undefined) {
@@ -1073,6 +1083,10 @@ function renderKPIs() {
   const nCancelados = cancelados.length;
   const valCancelado = cancelados.reduce((s, d) => s + d.valor, 0);
   const programasAtivos = new Set(ativos.map(d => d.programa).filter(Boolean)).size;
+  const entregues = data.filter(d => {
+    const a = parseFloat(d.anoEntrega);
+    return !isNaN(a) && a >= 2000 && a <= 2100;
+  }).length;
 
   const kpis = [
     { label: 'Total de Projetos', value: total, sub: `${programasAtivos} programas · excl. cancelados`, icon: '📋', accent: '#c9a84c' },
@@ -1081,7 +1095,7 @@ function renderKPIs() {
     { label: 'Iniciados', value: iniciados, sub: 'projetos em andamento', icon: '⚡', accent: '#4b9fe8' },
     { label: 'Encerrados', value: encerrados, sub: 'projetos entregues', icon: '✅', accent: '#3dbb77' },
     { label: 'A Iniciar', value: aIniciar, sub: 'aguardando início', icon: '⏳', accent: '#8a96ab' },
-    { label: 'Cancelados', value: nCancelados, sub: nCancelados > 0 ? '– R$ ' + fmtM(valCancelado) + ' abatidos' : 'nenhum', icon: '✖', accent: '#e05252' },
+    { label: 'Projetos Entregues', value: entregues, sub: 'com ano de entrega registrado', icon: '🏁', accent: '#3dbb77' },
   ];
 
   document.getElementById('kpiStrip').innerHTML = kpis.map(k => `
@@ -1359,15 +1373,14 @@ function renderTable() {
       <td>${d.ano || '–'}</td>
       <td class="prog-${(d.programa||'').toLowerCase()}">${d.programa || '–'}</td>
       <td style="font-size:11px;color:#8a96ab">${d.ta || '–'}</td>
-      <td title="${d.descricao}">${trunc(d.descricao, 55)}</td>
-      <td title="${d.objeto}" style="color:#8a96ab">${trunc(d.objeto, 40)}</td>
+      <td title="${d.objeto}">${trunc(d.objeto, 65)}</td>
       <td style="white-space:nowrap;font-family:'Barlow Condensed',sans-serif;font-size:13px">${fmtBRL(d.valor)}</td>
       <td>${d.aplicacao ? `<span class="badge" style="background:rgba(${d.aplicacao==='Custeio'?'75,159,232':'232,122,75'},0.18);color:${d.aplicacao==='Custeio'?'#4b9fe8':'#e87a4b'};border:1px solid ${d.aplicacao==='Custeio'?'#4b9fe844':'#e87a4b44'}">${d.aplicacao}</span>` : '–'}</td>
       <td>${marcoBadge(d.statusMarco)}</td>
       <td>${sgpeCell(d)}</td>
       <td title="${d.statusReport}" style="color:#d8dde8;font-size:11px;max-width:220px;white-space:normal;line-height:1.4">${d.statusReport || '–'}</td>
     </tr>
-  `).join('') || '<tr><td colspan="10" style="text-align:center;color:#8a96ab;padding:24px">Nenhum projeto iniciado ou encerrado encontrado</td></tr>';
+  `).join('') || '<tr><td colspan="9" style="text-align:center;color:#8a96ab;padding:24px">Nenhum projeto iniciado ou encerrado encontrado</td></tr>';
 }
 
 // ═══════════════════════════════════════════ HELPERS
