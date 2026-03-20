@@ -983,10 +983,11 @@ function processData(rows) {
 // ═══════════════════════════════════════════ MARCO CLASSIFIER
 function classifyMarco(m) {
   if (!m) return 'A iniciar';
-  const s = m.trim().toLowerCase();
+  const s = m.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (s === 'projeto cancelado' || s === 'cancelado') return 'Cancelado';
-  if (s === 'projeto não iniciado' || s === 'a iniciar') return 'A iniciar';
-  if (s.includes('encerramento') || s.includes('m19') || s.includes('12)')) return 'Encerrado';
+  if (s === 'projeto nao iniciado' || s === 'a iniciar') return 'A iniciar';
+  // Encerrado: único critério é o texto "termo de encerramento" — válido para todas as modalidades
+  if (s.includes('termo de encerramento')) return 'Encerrado';
   return 'Iniciado';
 }
 
