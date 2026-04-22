@@ -59,7 +59,6 @@
     min-height: 80px;
   }
 
-  /* Logo area */
   .logo-zone {
     width: 110px;
     min-width: 110px;
@@ -96,7 +95,6 @@
   #logoImg { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; display:none; }
   #logoInput { display: none; }
 
-  /* Titles */
   .header-titles {
     flex: 1;
     display: flex;
@@ -398,11 +396,11 @@
     text-transform: uppercase;
     white-space: nowrap;
   }
-  .badge-encerrado  { background: rgba(61,187,119,0.18); color: #3dbb77; border: 1px solid #3dbb7744; }
-  .badge-execucao   { background: rgba(75,159,232,0.18); color: #4b9fe8; border: 1px solid #4b9fe844; }
-  .badge-planejamento { background: rgba(240,168,64,0.18); color: #f0a840; border: 1px solid #f0a84044; }
+  .badge-encerrado    { background: rgba(61,187,119,0.18);  color: #3dbb77; border: 1px solid #3dbb7744; }
+  .badge-execucao     { background: rgba(75,159,232,0.18);  color: #4b9fe8; border: 1px solid #4b9fe844; }
+  .badge-planejamento { background: rgba(240,168,64,0.18);  color: #f0a840; border: 1px solid #f0a84044; }
   .badge-nao-iniciado { background: rgba(138,150,171,0.18); color: #8a96ab; border: 1px solid #8a96ab44; }
-  .badge-cancelado  { background: rgba(224,82,82,0.18); color: #e05252; border: 1px solid #e0525244; }
+  .badge-cancelado    { background: rgba(224,82,82,0.18);   color: #e05252; border: 1px solid #e0525244; }
 
   .prog-evm  { color: #4b9fe8; font-weight: 600; }
   .prog-mqv  { color: #3dbb77; font-weight: 600; }
@@ -493,9 +491,6 @@
     transition: width 1s ease;
   }
 
-  /* ─── ETAPA COLORS ──────────────────────────────────── */
-  .etapa-bar { height: 8px; border-radius: 4px; }
-
   /* ─── RESPONSIVE ───────────────────────────────────── */
   @media (max-width: 900px) {
     .col-4, .col-5, .col-6, .col-7, .col-8 { grid-column: span 12; }
@@ -534,7 +529,6 @@
 <!-- ═══════════════════════════════════════════════════════ HEADER -->
 <header>
   <div class="header-inner">
-    <!-- Logo placeholder / upload -->
     <div class="logo-zone">
       <label class="logo-placeholder" title="Clique para adicionar logotipo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -548,13 +542,11 @@
       </label>
     </div>
 
-    <!-- Titles -->
     <div class="header-titles">
       <div class="header-org">Polícia Militar de Santa Catarina</div>
       <div class="header-sub">Escritório de Projetos da Polícia Militar</div>
     </div>
 
-    <!-- Right controls -->
     <div class="header-right">
       <div class="header-date" id="headerDate"></div>
       <button id="refreshBtn" onclick="loadData()">
@@ -677,7 +669,7 @@
               <th>Programa</th>
               <th>TA</th>
               <th>Objeto</th>
-              <th>Valor SENASP</th>
+              <th>Valor do Projeto</th><!-- ← alterado de "Valor SENASP" -->
               <th>Aplicação</th>
               <th>Marco</th>
               <th>SGP-e Execução</th>
@@ -760,10 +752,8 @@ function handleLogoUpload(e) {
 }
 
 // ═══════════════════════════════════════════ LOAD
-
-// Fetch CSV usando 3 estratégias em cascata — mesmo padrão que funciona em file://
 async function fetchCSVRaw(url) {
-  // Estratégia 1: fetch direto (funciona se Google enviar CORS header)
+  // Estratégia 1: fetch direto
   try {
     const resp = await fetch(url);
     if (resp.ok) {
@@ -788,7 +778,7 @@ async function fetchCSVRaw(url) {
     }
   } catch(e) {}
 
-  // Estratégia 3: allorigins — retorna JSON com campo "contents"
+  // Estratégia 3: allorigins
   try {
     const proxy2 = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
     const resp = await fetch(proxy2);
@@ -823,7 +813,6 @@ function loadData() {
   });
 }
 
-// Colagem manual do CSV (fallback de último recurso)
 function loadFromPaste() {
   const text = (document.getElementById('csvPaste').value || '').trim();
   if (!text) { alert('Cole o conteúdo CSV antes de processar.'); return; }
@@ -837,7 +826,6 @@ function loadFromPaste() {
 }
 
 // ═══════════════════════════════════════════ COLUMN MAP
-// Maps semantic field names → possible CSV header strings (case-insensitive, trimmed)
 const COL_MAP = {
   ano:          ['ano'],
   programa:     ['programa'],
@@ -864,20 +852,17 @@ const COL_MAP = {
 };
 
 function buildColIndex(headerRow) {
-  // Returns { fieldName: colIndex }
   const idx = {};
   const normalized = headerRow.map(h => String(h || '').toLowerCase().trim()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''));  // strip accents for matching
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
 
   for (const [field, variants] of Object.entries(COL_MAP)) {
     let found = -1;
-    // Passagem 1: match exato (evita 'status report' casar com 'sgpe status report')
     for (const variant of variants) {
       const normVariant = variant.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       found = normalized.findIndex(h => h === normVariant);
       if (found !== -1) break;
     }
-    // Passagem 2: match parcial (includes) apenas se exato não encontrou
     if (found === -1) {
       for (const variant of variants) {
         const normVariant = variant.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -887,7 +872,6 @@ function buildColIndex(headerRow) {
     }
     if (found !== -1) idx[field] = found;
   }
-  // sgpeLink: coluna sem cabeçalho imediatamente após SGP-e Execução
   if (idx.sgpeExec !== undefined) {
     idx.sgpeLink = idx.sgpeExec + 1;
   }
@@ -902,34 +886,38 @@ function processData(rows) {
     return;
   }
 
-  // Find the real header row: the one that contains 'Ano' and 'Programa'
   let headerIdx = -1;
   for (let i = 0; i < Math.min(rows.length, 10); i++) {
     const low = rows[i].map(c => String(c||'').toLowerCase().trim());
     if (low.includes('ano') && low.includes('programa')) { headerIdx = i; break; }
   }
-  if (headerIdx < 0) {
-    // Fallback: assume row index 1 is header
-    headerIdx = 1;
-  }
+  if (headerIdx < 0) headerIdx = 1;
 
   const colIdx = buildColIndex(rows[headerIdx]);
   const get = (row, field) => String(row[colIdx[field]] ?? '').trim();
 
   rawData = [];
+  let apensadosCount = 0; // ← contagem de projetos apensados ignorados
+
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const r = rows[i];
 
-    // Skip rows where 'Ano' is not a 4-digit year
     const anoRaw = get(r, 'ano');
     const anoNum = parseFloat(anoRaw);
     if (!anoRaw || isNaN(anoNum) || anoNum < 2000 || anoNum > 2100) continue;
 
-    // Skip rows where Programa is clearly garbage (not a short uppercase code)
     const prog = get(r, 'programa');
     if (!prog || prog.length > 10) continue;
 
     const marcoRaw = get(r, 'marco');
+    const statusMarco = classifyMarco(marcoRaw);
+
+    // ─── PROJETO APENSADO: ignorar completamente — não entra em rawData ───
+    if (statusMarco === 'Apensado') {
+      apensadosCount++;
+      continue;
+    }
+
     rawData.push({
       ano:          anoNum,
       programa:     prog.toUpperCase(),
@@ -952,7 +940,7 @@ function processData(rows) {
       anoExec:      get(r, 'anoExec'),
       sgpeStatus:   get(r, 'sgpeStatus'),
       marco:        marcoRaw,
-      statusMarco:  classifyMarco(marcoRaw),
+      statusMarco,
       ultimoReport: get(r, 'ultimoReport'),
       statusReport: get(r, 'statusReport'),
     });
@@ -975,42 +963,37 @@ function processData(rows) {
   document.getElementById('loadingOverlay').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
 
-  // Show record count in badge
   const badge = document.querySelector('.title-badge span:last-child');
-  if (badge) badge.textContent = `${rawData.length} projetos carregados · Fonte: Planilha FESP`;
+  const apensadoInfo = apensadosCount > 0 ? ` · ${apensadosCount} apensado(s) excluído(s)` : '';
+  if (badge) badge.textContent = `${rawData.length} projetos carregados · Fonte: Planilha FESP${apensadoInfo}`;
 }
 
 // ═══════════════════════════════════════════ MARCO CLASSIFIER
 function classifyMarco(m) {
   if (!m) return 'A iniciar';
   const s = m.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // ─── PROJETO APENSADO: absorvido por outro projeto de idêntica temática ───
+  if (s.includes('apensado') || s === 'projeto apensado') return 'Apensado';
+
   if (s === 'projeto cancelado' || s === 'cancelado') return 'Cancelado';
   if (s === 'projeto nao iniciado' || s === 'a iniciar') return 'A iniciar';
-  // Encerrado: único critério é o texto "termo de encerramento" — válido para todas as modalidades
   if (s.includes('termo de encerramento')) return 'Encerrado';
   return 'Iniciado';
 }
 
-// ═══════════════════════════════════════════ ROBUST NUMBER PARSER
-// Handles: "R$ 1.234,56" | "1234.56" | "1.234.567,89" | "=SUM(...)" | empty
+// ═══════════════════════════════════════════ NUMBER PARSER
 function parseBRL(raw) {
   if (!raw) return 0;
   let s = String(raw).trim();
-  // Strip currency prefix
   s = s.replace(/^R\$\s*/i, '').trim();
-  // If it's a formula, return 0 (can't evaluate)
   if (s.startsWith('=')) return 0;
-  // Remove spaces
   s = s.replace(/\s/g, '');
-  // Brazilian format: dots as thousand separators, comma as decimal
-  // Detect: if last separator is comma → BR format
   const lastComma = s.lastIndexOf(',');
   const lastDot   = s.lastIndexOf('.');
   if (lastComma > lastDot) {
-    // BR format: remove dots (thousand sep), replace comma with dot
     s = s.replace(/\./g, '').replace(',', '.');
   } else if (lastDot > lastComma) {
-    // US/standard format: remove commas (thousand sep)
     s = s.replace(/,/g, '');
   }
   const v = parseFloat(s);
@@ -1071,18 +1054,16 @@ function renderAll() {
 function renderKPIs() {
   const data = filteredData;
 
-  // Excluir cancelados das métricas principais
-  const ativos    = data.filter(d => d.statusMarco !== 'Cancelado');
+  const ativos     = data.filter(d => d.statusMarco !== 'Cancelado');
   const cancelados = data.filter(d => d.statusMarco === 'Cancelado');
 
-  const total      = ativos.length;
-  const totalVal   = ativos.reduce((s, d) => s + d.valor, 0);          // Plano SENASP excl. cancelados
-  const totalPago  = ativos.reduce((s, d) => s + d.valorExec, 0);      // Valor Executado excl. cancelados
-  const iniciados  = ativos.filter(d => d.statusMarco === 'Iniciado').length;
-  const encerrados = ativos.filter(d => d.statusMarco === 'Encerrado').length;
-  const aIniciar   = ativos.filter(d => d.statusMarco === 'A iniciar').length;
+  const total       = ativos.length;
+  const totalVal    = ativos.reduce((s, d) => s + d.valor, 0);
+  const totalPago   = ativos.reduce((s, d) => s + d.valorExec, 0);
+  const iniciados   = ativos.filter(d => d.statusMarco === 'Iniciado').length;
+  const encerrados  = ativos.filter(d => d.statusMarco === 'Encerrado').length;
+  const aIniciar    = ativos.filter(d => d.statusMarco === 'A iniciar').length;
   const nCancelados = cancelados.length;
-  const valCancelado = cancelados.reduce((s, d) => s + d.valor, 0);
   const programasAtivos = new Set(ativos.map(d => d.programa).filter(Boolean)).size;
   const entregues = data.filter(d => {
     const a = parseFloat(d.anoEntrega);
@@ -1090,13 +1071,13 @@ function renderKPIs() {
   }).length;
 
   const kpis = [
-    { label: 'Total de Projetos', value: total, sub: `${programasAtivos} programas · excl. cancelados`, icon: '📋', accent: '#c9a84c' },
-    { label: 'Valor Total SENASP', value: 'R$ ' + fmtM(totalVal), sub: 'plano de aplicação (excl. cancelados)', icon: '💰', accent: '#3dbb77' },
-    { label: 'Valor Pago', value: totalPago > 0 ? 'R$ ' + fmtM(totalPago) : '–', sub: 'valor executado / pago', icon: '✔', accent: '#3dbb77' },
-    { label: 'Iniciados', value: iniciados, sub: 'projetos em andamento', icon: '⚡', accent: '#4b9fe8' },
-    { label: 'Encerrados', value: encerrados, sub: 'projetos entregues', icon: '✅', accent: '#3dbb77' },
-    { label: 'A Iniciar', value: aIniciar, sub: 'aguardando início', icon: '⏳', accent: '#8a96ab' },
-    { label: 'Projetos Entregues', value: entregues, sub: 'com ano de entrega registrado', icon: '🏁', accent: '#3dbb77' },
+    { label: 'Total de Projetos',    value: total,    sub: `${programasAtivos} programas · excl. cancelados`, icon: '📋', accent: '#c9a84c' },
+    { label: 'Valor Total',          value: 'R$ ' + fmtM(totalVal),  sub: 'plano de aplicação (excl. cancelados)', icon: '💰', accent: '#3dbb77' },
+    { label: 'Valor Pago',           value: totalPago > 0 ? 'R$ ' + fmtM(totalPago) : '–', sub: 'valor executado / pago', icon: '✔', accent: '#3dbb77' },
+    { label: 'Iniciados',            value: iniciados,   sub: 'projetos em andamento', icon: '⚡', accent: '#4b9fe8' },
+    { label: 'Encerrados',           value: encerrados,  sub: 'projetos entregues',    icon: '✅', accent: '#3dbb77' },
+    { label: 'A Iniciar',            value: aIniciar,    sub: 'aguardando início',      icon: '⏳', accent: '#8a96ab' },
+    { label: 'Projetos Entregues',   value: entregues,   sub: 'com ano de entrega registrado', icon: '🏁', accent: '#3dbb77' },
   ];
 
   document.getElementById('kpiStrip').innerHTML = kpis.map(k => `
@@ -1350,7 +1331,6 @@ function renderChartValorAno() {
 // ═══════════════════════════════════════════ TABLE
 function renderTable() {
   const tbody = document.getElementById('tableBody');
-  // Exibe apenas Iniciados e Encerrados (exclui Cancelados e A iniciar)
   const rows = filteredData
     .filter(d => d.statusMarco === 'Iniciado' || d.statusMarco === 'Encerrado')
     .slice(0, 200);
@@ -1394,35 +1374,9 @@ function fmtBRL(v) {
   if (!v) return '–';
   return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 }
-function fmtDate(s) {
-  if (!s) return '–';
-  const d = new Date(s);
-  if (isNaN(d)) return String(s).substring(0,10);
-  return d.toLocaleDateString('pt-BR');
-}
 function trunc(s, n) {
   if (!s) return '–';
   return s.length > n ? s.substring(0, n) + '…' : s;
-}
-function simplifyEtapa(e) {
-  if (!e) return 'Sem info';
-  if (e.includes('Encerramento') || e.includes('Encerrado')) return 'Encerramento';
-  if (e.includes('Pagamento')) return 'Pagamento';
-  if (e.includes('Contrato assinado')) return 'Contrato / Empenho';
-  if (e.includes('Parecer jurídico')) return 'Parecer Jurídico';
-  if (e.includes('pré-certame')) return 'Pré-certame';
-  if (e.includes('Aprovação') || e.includes('Aprovacao')) return 'Aprovação';
-  if (e.includes('não iniciado')) return 'Projeto não iniciado';
-  return trunc(e, 30);
-}
-function badgeClass(e) {
-  if (!e) return 'badge-nao-iniciado';
-  if (e.includes('Encerramento') || e.includes('Encerrado')) return 'badge-encerrado';
-  if (e.includes('Execução') || e.includes('Contrato') || e.includes('Pagamento') || e.includes('Parecer')) return 'badge-execucao';
-  if (e.includes('Planejamento') || e.includes('Aprovação') || e.includes('pré-certame')) return 'badge-planejamento';
-  if (e.includes('não iniciado') || e.includes('Sem info')) return 'badge-nao-iniciado';
-  if (e.includes('cancelado') || e.includes('cancelar')) return 'badge-cancelado';
-  return 'badge-nao-iniciado';
 }
 function hexAlpha(hex, alpha) {
   const r = parseInt(hex.slice(1,3),16);
