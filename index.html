@@ -131,7 +131,7 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
 .um-card-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--gold-light);margin-bottom:8px}
 .um-nums{display:flex;gap:12px;margin-bottom:6px}
 .um-num{text-align:center}
-.um-num-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;line-height:1}
+.um-num-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;line-height:1;word-break:break-all}
 .um-num-lbl{font-size:9px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
 /* MODAL */
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(7,20,40,0.85);z-index:200;backdrop-filter:blur(3px)}
@@ -283,6 +283,17 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
       <div class="charts-grid">
         <div class="chart-card col-12"><div class="chart-title">Qtd Planejada vs Executada por Objeto</div><div class="chart-wrap" style="height:280px"><canvas id="chartEntregas"></canvas></div></div>
       </div>
+      <!-- Tabela suplementar para objetos com grandes quantidades -->
+      <div id="tblGrande" class="chart-card col-12" style="margin-top:0;display:none">
+        <div class="chart-title">Objetos com Grande Volume — fora da escala do gráfico acima</div>
+        <div class="table-wrap" style="max-height:180px">
+          <table>
+            <thead><tr><th>Objeto</th><th>Unidade</th><th>Qtd Plano</th><th>Qtd Projeto</th><th>Qtd Executada</th><th>% Físico</th></tr></thead>
+            <tbody id="tblGrandeBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="chart-card col-12" style="margin-top:0">
         <div class="chart-title">Detalhamento por Projeto</div>
         <div class="table-wrap">
@@ -857,9 +868,9 @@ function renderEntregas(){
     return`<div class="um-card">
       <div class="um-card-name">${um}</div>
       <div class="um-nums">
-        <div class="um-num"><div class="um-num-val" style="color:#c9a84c">${fmtNum(u.plan)}</div><div class="um-num-lbl">Plano</div></div>
-        <div class="um-num"><div class="um-num-val" style="color:#4b9fe8">${fmtNum(u.proj)||'–'}</div><div class="um-num-lbl">Projeto</div></div>
-        <div class="um-num"><div class="um-num-val" style="color:#3dbb77">${fmtNum(u.exec)||'–'}</div><div class="um-num-lbl">Executado</div></div>
+        <div class="um-num"><div class="um-num-val" style="color:#c9a84c" title="${fmtNum(u.plan)}">${fmtM(u.plan)}</div><div class="um-num-lbl">Plano</div></div>
+        <div class="um-num"><div class="um-num-val" style="color:#4b9fe8" title="${u.proj?fmtNum(u.proj):'–'}">${u.proj?fmtM(u.proj):'–'}</div><div class="um-num-lbl">Projeto</div></div>
+        <div class="um-num"><div class="um-num-val" style="color:#3dbb77" title="${u.exec?fmtNum(u.exec):'–'}">${u.exec?fmtM(u.exec):'–'}</div><div class="um-num-lbl">Executado</div></div>
       </div>
       ${u.proj>0?`<div style="font-size:10px;color:var(--gray);margin-bottom:3px">${pct}% entregue</div>${pctBar(pct)}`:''}
       <div style="font-size:10px;color:var(--gray);margin-top:5px">${u.count} projeto(s)</div>
@@ -870,16 +881,53 @@ function renderEntregas(){
   const objs=[...new Set(data.filter(d=>d.qtdPlano>0||d.qtdExecutada>0).map(d=>d.objeto).filter(Boolean))];
   const planByObj=objs.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdPlano,0));
   const execByObj=objs.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdExecutada,0));
+  // Separa objetos com qtd muito grande (>10k) para não distorcer escala
+  const LIMIAR = 10000;
+  const objsNorm = objs.filter((_,i)=>planByObj[i]<=LIMIAR);
+  const objsGrande = objs.filter((_,i)=>planByObj[i]>LIMIAR);
+
+  // Gráfico principal — objetos com qtd ≤ 10k (escala linear legível)
   charts['chartEntregas']=new Chart(document.getElementById('chartEntregas').getContext('2d'),{
     type:'bar',
-    data:{labels:objs,datasets:[
-      {label:'Qtd Planejada',data:planByObj,backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},
-      {label:'Qtd Executada',data:execByObj,backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false},
+    data:{labels:objsNorm,datasets:[
+      {label:'Qtd Planejada',data:objsNorm.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdPlano,0)),backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},
+      {label:'Qtd Executada',data:objsNorm.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdExecutada,0)),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false},
     ]},
     options:{...CD,maintainAspectRatio:false,indexAxis:'y',
-      scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}},
-      plugins:{...CD.plugins,legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}}}}
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10}}},
+        y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}
+      },
+      plugins:{...CD.plugins,
+        legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},
+        tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')}`}}
+      }
+    }
   });
+
+  // Tabela suplementar para objetos com qtd > 10k (escala incompatível com gráfico)
+  const tblGrande = document.getElementById('tblGrande');
+  if(tblGrande){
+    if(objsGrande.length>0){
+      tblGrande.style.display='block';
+      document.getElementById('tblGrandeBody').innerHTML = objsGrande.map(o=>{
+        const plan=data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdPlano,0);
+        const exec=data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdExecutada,0);
+        const proj=data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdProjeto,0);
+        const pct=proj>0?Math.round(exec/proj*100):null;
+        const um=data.find(d=>d.objeto===o)?.um||'–';
+        return`<tr>
+          <td>${o}</td><td style="color:#8a96ab">${um}</td>
+          <td style="text-align:right;color:#c9a84c">${plan.toLocaleString('pt-BR')}</td>
+          <td style="text-align:right;color:#4b9fe8">${proj?proj.toLocaleString('pt-BR'):'–'}</td>
+          <td style="text-align:right;color:#3dbb77;font-weight:600">${exec?exec.toLocaleString('pt-BR'):'–'}</td>
+          <td>${pct!==null?`<span style="color:${pct>=100?'#3dbb77':pct<30?'#e05252':'#f0a840'};font-weight:700">${pct}%</span>`:'–'}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      tblGrande.style.display='none';
+    }
+  }
   // Tabela
   document.getElementById('tableEntregas').innerHTML=data.map(d=>{
     const pct=d.qtdProjeto>0?Math.round(d.qtdExecutada/d.qtdProjeto*100):null;
