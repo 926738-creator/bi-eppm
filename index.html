@@ -102,6 +102,13 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
 .badge-planejamento{background:rgba(240,168,64,0.18);color:#f0a840;border:1px solid #f0a84044}
 .badge-nao-iniciado{background:rgba(138,150,171,0.18);color:#8a96ab;border:1px solid #8a96ab44}
 .badge-cancelado{background:rgba(224,82,82,0.18);color:#e05252;border:1px solid #e0525244}
+.entrega-ok{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(61,187,119,0.18);color:#3dbb77;border:1px solid #3dbb7744}
+.entrega-proxima{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(240,168,64,0.25);color:#f0a840;border:1px solid #f0a84066}
+.entrega-normal{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(75,159,232,0.15);color:#4b9fe8;border:1px solid #4b9fe844}
+.entrega-vencida{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(224,82,82,0.18);color:#e05252;border:1px solid #e0525244;animation:pulseRed 1.5s infinite}
+@keyframes pulseRed{0%,100%{opacity:1}50%{opacity:0.6}}
+.emp-sim{color:#3dbb77;font-weight:700;font-size:11px}
+.emp-nao{color:#e05252;font-weight:700;font-size:11px}
 /* PROG COLORS */
 .prog-evm{color:#4b9fe8;font-weight:600}.prog-mqv{color:#3dbb77;font-weight:600}.prog-rmv{color:#e87a4b;font-weight:600}.prog-fisp{color:#c46be8;font-weight:600}
 /* SECTION HEADER */
@@ -279,6 +286,17 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
   <div class="tab-panel" id="panel1">
     <div class="container">
       <div class="kpi-strip" id="kpiEntregas"></div>
+      <!-- Entregas por Ano -->
+      <div class="charts-grid" id="entregasAnoSection">
+        <div class="chart-card col-6">
+          <div class="chart-title">Entregas por Ano de Entrega</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartEntregasAno"></canvas></div>
+        </div>
+        <div class="chart-card col-6">
+          <div class="chart-title">Acumulado de Entregas</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartEntregasAcum"></canvas></div>
+        </div>
+      </div>
       <div class="um-cards" id="umCards"></div>
       <div class="charts-grid">
         <div class="chart-card col-12"><div class="chart-title">Qtd Planejada vs Executada por Objeto</div><div class="chart-wrap" style="height:280px"><canvas id="chartEntregas"></canvas></div></div>
@@ -344,7 +362,7 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
       <div class="chart-card col-12" style="margin-bottom:0">
         <div class="table-wrap" style="max-height:500px">
           <table>
-            <thead><tr><th>Ano</th><th>Prog</th><th>TA</th><th>Objeto</th><th>Modalidade</th><th>Marco Atual</th><th>Progresso</th><th>Status</th><th>Último Report</th><th>SGP-e</th></tr></thead>
+            <thead><tr><th>Ano</th><th>Prog</th><th>TA</th><th>Objeto</th><th>Modalidade</th><th>Emp.</th><th>Prazo Entrega</th><th>Marco Atual</th><th>Progresso</th><th>Status</th><th>Último Report</th><th>SGP-e</th></tr></thead>
             <tbody id="tableMonitoramento"></tbody>
           </table>
         </div>
@@ -540,6 +558,9 @@ const COL_MAP={
   valorProjeto:['valor do projeto'],
   sgpeExec:['sgp-e execução','sgpe execução','sgp-e execucao','sgpe execucao'],
   sgpeLink:['link sgpe execução','link sgpe execucao','link sgp-e execução','link sgp-e execucao'],
+  empenhado:['empenhado?','empenhado'],
+  dataContrato:['data do contrato'],
+  prazoEntrega:['prazo do entrega','prazo de entrega','prazo entrega'],
   objetoExec:['objeto executado'],
   modalidade:['modalidade de contratação','modalidade de contratacao','modalidade'],
   qtdExecutada:['quantidade executada'],
@@ -595,6 +616,9 @@ function processData(rows){
       qtdProjeto:parseNum(get(r,'qtdProjeto')), valorProjeto:parseBRL(get(r,'valorProjeto')),
       sgpeExec:get(r,'sgpeExec'),
       sgpeLink:ci.sgpeLink!==undefined?String(r[ci.sgpeLink]||'').trim():'',
+      empenhado:get(r,'empenhado'),
+      dataContrato:parseDate(r[ci.dataContrato]),
+      prazoEntrega:parsePrazo(r[ci.prazoEntrega]),
       objetoExec:get(r,'objetoExec'), modalidade:get(r,'modalidade'),
       qtdExecutada:parseNum(get(r,'qtdExecutada')), valorExec:parseBRL(get(r,'valorExec')),
       anoExec:get(r,'anoExec'), sgpeStatus:get(r,'sgpeStatus'),
@@ -629,6 +653,48 @@ function parseMarcoNum(m){
   const match=m.match(/M(\d+)/i); return match?parseInt(match[1]):0;
 }
 
+// Converte data do CSV (ISO string ou serial Excel) para objeto Date ou null
+function parseDate(raw){
+  if(!raw&&raw!==0)return null;
+  const s=String(raw).trim();
+  if(!s||s==='None'||s==='null')return null;
+  // Formato ISO: "2026-05-11 00:00:00" ou "2026-05-11"
+  const iso=s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if(iso){const d=new Date(iso[1]);return isNaN(d)?null:d;}
+  // Número puro (serial Excel) — raro no CSV mas por segurança
+  const n=parseFloat(s);
+  if(!isNaN(n)&&n>40000){const d=new Date((n-25569)*86400*1000);return isNaN(d)?null:d;}
+  return null;
+}
+// Prazo: pode ser número de dias (float) ou data ISO
+function parsePrazo(raw){
+  if(!raw&&raw!==0)return null;
+  const s=String(raw).trim();
+  if(!s||s==='None'||s==='null')return null;
+  const n=parseFloat(s);
+  if(!isNaN(n)&&n>0&&n<3000)return{tipo:'dias',valor:Math.round(n)};
+  const d=parseDate(s);
+  if(d)return{tipo:'data',valor:d};
+  return null;
+}
+// Calcula status de entrega: "Entrega realizada" | "Entrega próxima" | "X dias" | null
+function calcPrazo(d){
+  // Se objeto executado preenchido E qtd executada > 0 → entrega realizada
+  if(d.objetoExec&&d.qtdExecutada>0)return{status:'realizada',label:'Entrega realizada',cls:'entrega-ok'};
+  if(!d.prazoEntrega)return null;
+  let dataEntrega=null;
+  if(d.prazoEntrega.tipo==='data'){
+    dataEntrega=d.prazoEntrega.valor;
+  } else if(d.prazoEntrega.tipo==='dias'&&d.dataContrato){
+    dataEntrega=new Date(d.dataContrato.getTime()+d.prazoEntrega.valor*86400*1000);
+  }
+  if(!dataEntrega)return null;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const diff=Math.round((dataEntrega-hoje)/(86400*1000));
+  if(diff<=0)return{status:'vencido',label:'Prazo vencido',cls:'entrega-vencida'};
+  if(diff<=30)return{status:'proximo',label:'Entrega próxima',cls:'entrega-proxima'};
+  return{status:'ok',label:`${diff} dias`,cls:'entrega-normal'};
+}
 function parseBRL(raw){
   if(!raw)return 0; let s=String(raw).trim();
   s=s.replace(/^R\$\s*/i,'').trim(); if(s.startsWith('='))return 0;
@@ -843,6 +909,62 @@ function renderPipeline(){
 // ════════════════════════════════════
 function renderEntregas(){
   const data=filteredData.filter(d=>d.statusMarco!=='Cancelado');
+
+  // ── Gráficos de Entregas por Ano (coluna Ano Entrega) ──
+  const anoEntregaMap={};
+  data.forEach(d=>{
+    const a=d.anoEntrega?String(d.anoEntrega).split('.')[0].trim():'';
+    if(a&&a!=='0'&&a.length===4){anoEntregaMap[a]=(anoEntregaMap[a]||0)+1;}
+  });
+  const anosEnt=Object.keys(anoEntregaMap).sort();
+
+  destroyChart('chartEntregasAno');
+  if(anosEnt.length>0){
+    const ctx1=document.getElementById('chartEntregasAno').getContext('2d');
+    charts['chartEntregasAno']=new Chart(ctx1,{
+      type:'bar',
+      data:{labels:anosEnt,datasets:[{
+        label:'Projetos entregues',
+        data:anosEnt.map(a=>anoEntregaMap[a]),
+        backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',
+        borderWidth:1,borderRadius:4,borderSkipped:false
+      }]},
+      options:{...CD,maintainAspectRatio:false,
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},
+          y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},stepSize:1}}
+        },
+        plugins:{...CD.plugins,legend:{display:false},
+          tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.parsed.y} projeto(s)`}}}
+      }
+    });
+  }
+
+  destroyChart('chartEntregasAcum');
+  if(anosEnt.length>0){
+    let acum=0;
+    const acumData=anosEnt.map(a=>{acum+=anoEntregaMap[a];return acum;});
+    const ctx2=document.getElementById('chartEntregasAcum').getContext('2d');
+    charts['chartEntregasAcum']=new Chart(ctx2,{
+      type:'line',
+      data:{labels:anosEnt,datasets:[{
+        label:'Acumulado',
+        data:acumData,
+        borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.12)',
+        borderWidth:2,pointRadius:5,pointBackgroundColor:'#c9a84c',
+        fill:true,tension:0.3
+      }]},
+      options:{...CD,maintainAspectRatio:false,
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},
+          y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},stepSize:1},min:0}
+        },
+        plugins:{...CD.plugins,legend:{display:false},
+          tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.parsed.y} no total`}}}
+      }
+    });
+  }
+
   // KPIs
   const totalPlan=data.reduce((s,d)=>s+d.qtdPlano,0);
   const totalProj=data.reduce((s,d)=>s+d.qtdProjeto,0);
@@ -1061,6 +1183,8 @@ function renderMonitoramento(){
       <td style="font-size:10px;color:#8a96ab">${d.ta||'–'}</td>
       <td title="${d.objeto}">${trunc(d.objeto,35)}</td>
       <td style="font-size:10px;color:#8a96ab">${trunc(d.modalidade,20)}</td>
+      <td>${d.empenhado==='Sim'?'<span class="emp-sim">✓ Sim</span>':d.empenhado==='Não'?'<span class="emp-nao">✗ Não</span>':'<span style="color:#8a96ab">–</span>'}</td>
+      <td>${(()=>{const p=calcPrazo(d);return p?`<span class="${p.cls}">${p.label}</span>`:'<span style="color:#8a96ab">–</span>';})()}</td>
       <td style="font-size:10px">${trunc(d.marco,30)}</td>
       <td style="min-width:90px">${progHtml}</td>
       <td>${marcoBadge(d.statusMarco)}</td>
