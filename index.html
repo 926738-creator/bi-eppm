@@ -314,7 +314,7 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
           <option value="FISP">FISP</option>
         </select>
         <span class="filter-label" style="margin-left:8px">Objeto:</span>
-        <select id="filtEntObj" onchange="renderChartEntregas()">
+        <select id="filtEntObj" onchange="requestAnimationFrame(renderChartEntregas)">
           <option value="">Top 5 por valor</option>
         </select>
       </div>
@@ -957,7 +957,8 @@ function onFiltEntEixo(init){
   )].sort();
   sel.innerHTML='<option value="">Top 5 por valor</option>';
   objs.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;sel.appendChild(op);});
-  renderChartEntregas();
+  // Adiar para garantir que o canvas esteja dimensionado pelo navegador
+  requestAnimationFrame(()=>requestAnimationFrame(renderChartEntregas));
 }
 function renderChartEntregas(){
   const eixo=document.getElementById('filtEntEixo').value;
