@@ -697,13 +697,21 @@ function parsePrazo(raw){
   if(d)return{tipo:'data',valor:d};
   return null;
 }
-// Parse ultimoReport string vindo do CSV
+// Parse ultimoReport — aceita ISO (2026-05-25), BR (25/05/2026) e US (5/25/2026)
 function parseUltimoReport(raw){
   if(!raw)return null;
   const s=String(raw).trim();
-  if(!s)return null;
-  const d=parseDate(s)||new Date(s);
-  return isNaN(d.getTime())?null:d;
+  if(!s||s==='None'||s==='null')return null;
+  // ISO: 2026-05-25 ou 2026-05-25 00:00:00
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso)return new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3]));
+  // BR: 25/05/2026
+  const br=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(br)return new Date(Number(br[3]),Number(br[2])-1,Number(br[1]));
+  // US: 5/25/2026
+  const us=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(us){const d=new Date(Number(us[3]),Number(us[2])-1,Number(us[1]));if(!isNaN(d.getTime()))return d;}
+  return null;
 }
 // Calcula status de prazo de entrega
 function calcPrazo(d){
