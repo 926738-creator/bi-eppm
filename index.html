@@ -103,12 +103,17 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
 .badge-nao-iniciado{background:rgba(138,150,171,0.18);color:#8a96ab;border:1px solid #8a96ab44}
 .badge-cancelado{background:rgba(224,82,82,0.18);color:#e05252;border:1px solid #e0525244}
 .entrega-ok{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(61,187,119,0.18);color:#3dbb77;border:1px solid #3dbb7744}
-.entrega-proxima{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(240,168,64,0.25);color:#f0a840;border:1px solid #f0a84066}
+.entrega-proxima{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(240,168,64,0.25);color:#f0a840;border:1px solid #f0a84066;animation:pulseAmber 1.5s infinite}
 .entrega-normal{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(75,159,232,0.15);color:#4b9fe8;border:1px solid #4b9fe844}
 .entrega-vencida{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;background:rgba(224,82,82,0.18);color:#e05252;border:1px solid #e0525244;animation:pulseRed 1.5s infinite}
 @keyframes pulseRed{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes pulseAmber{0%,100%{opacity:1}50%{opacity:0.6}}
 .emp-sim{color:#3dbb77;font-weight:700;font-size:11px}
 .emp-nao{color:#e05252;font-weight:700;font-size:11px}
+/* Tooltip alerta */
+.alert-proj{cursor:default;border-bottom:1px dashed rgba(240,168,64,0.5);position:relative;display:inline-block}
+.alert-proj .alert-tooltip{display:none;position:absolute;bottom:calc(100% + 6px);left:0;background:#0d2045;border:1px solid rgba(201,168,76,0.4);border-radius:5px;padding:8px 12px;font-size:11px;color:#d8dde8;white-space:nowrap;z-index:50;min-width:200px;box-shadow:0 4px 16px rgba(0,0,0,0.5)}
+.alert-proj:hover .alert-tooltip{display:block}
 /* PROG COLORS */
 .prog-evm{color:#4b9fe8;font-weight:600}.prog-mqv{color:#3dbb77;font-weight:600}.prog-rmv{color:#e87a4b;font-weight:600}.prog-fisp{color:#c46be8;font-weight:600}
 /* SECTION HEADER */
@@ -286,8 +291,9 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
   <div class="tab-panel" id="panel1">
     <div class="container">
       <div class="kpi-strip" id="kpiEntregas"></div>
+      <div class="um-cards" id="umCards"></div>
       <!-- Entregas por Ano -->
-      <div class="charts-grid" id="entregasAnoSection">
+      <div class="charts-grid">
         <div class="chart-card col-6">
           <div class="chart-title">Entregas por Ano de Entrega</div>
           <div class="chart-wrap" style="height:200px"><canvas id="chartEntregasAno"></canvas></div>
@@ -297,9 +303,23 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
           <div class="chart-wrap" style="height:200px"><canvas id="chartEntregasAcum"></canvas></div>
         </div>
       </div>
-      <div class="um-cards" id="umCards"></div>
+
+      <!-- Filtro dois níveis + gráfico Qtd -->
+      <div class="filter-bar" style="margin-bottom:8px">
+        <span class="filter-label">Eixo:</span>
+        <select id="filtEntEixo" onchange="onFiltEntEixo()">
+          <option value="RMV">RMV</option>
+          <option value="EVM">EVM</option>
+          <option value="MQV">MQV</option>
+          <option value="FISP">FISP</option>
+        </select>
+        <span class="filter-label" style="margin-left:8px">Objeto:</span>
+        <select id="filtEntObj" onchange="renderChartEntregas()">
+          <option value="">Top 5 por valor</option>
+        </select>
+      </div>
       <div class="charts-grid">
-        <div class="chart-card col-12"><div class="chart-title">Qtd Planejada vs Executada por Objeto</div><div class="chart-wrap" style="height:280px"><canvas id="chartEntregas"></canvas></div></div>
+        <div class="chart-card col-12"><div class="chart-title" id="chartEntregasTitle">Qtd Planejada vs Executada — RMV · Top 5</div><div class="chart-wrap" style="height:280px"><canvas id="chartEntregas"></canvas></div></div>
       </div>
       <!-- Tabela suplementar para objetos com grandes quantidades -->
       <div id="tblGrande" class="chart-card col-12" style="margin-top:0;display:none">
@@ -355,8 +375,10 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
       <div class="filter-bar">
         <span class="filter-label">Filtrar:</span>
         <select id="filterMonProg" onchange="renderMonitoramento()"><option value="">Todos os programas</option></select>
+        <select id="filterMonAno" onchange="renderMonitoramento()"><option value="">Todos os anos</option></select>
         <select id="filterMonStatus" onchange="renderMonitoramento()"><option value="">Todos os status</option></select>
         <select id="filterMonMod" onchange="renderMonitoramento()"><option value="">Todas as modalidades</option></select>
+        <select id="filterMonObj" onchange="renderMonitoramento()"><option value="">Todos os objetos</option></select>
       </div>
       <div class="section-hdr" id="monTableTitle">Todos os Projetos</div>
       <div class="chart-card col-12" style="margin-bottom:0">
@@ -653,20 +675,18 @@ function parseMarcoNum(m){
   const match=m.match(/M(\d+)/i); return match?parseInt(match[1]):0;
 }
 
-// Converte data do CSV (ISO string ou serial Excel) para objeto Date ou null
+// Parse date from CSV string (ISO or Excel serial)
 function parseDate(raw){
   if(!raw&&raw!==0)return null;
   const s=String(raw).trim();
   if(!s||s==='None'||s==='null')return null;
-  // Formato ISO: "2026-05-11 00:00:00" ou "2026-05-11"
   const iso=s.match(/^(\d{4}-\d{2}-\d{2})/);
-  if(iso){const d=new Date(iso[1]);return isNaN(d)?null:d;}
-  // Número puro (serial Excel) — raro no CSV mas por segurança
+  if(iso){const d=new Date(iso[1]);return isNaN(d.getTime())?null:d;}
   const n=parseFloat(s);
-  if(!isNaN(n)&&n>40000){const d=new Date((n-25569)*86400*1000);return isNaN(d)?null:d;}
+  if(!isNaN(n)&&n>40000){const d=new Date((n-25569)*86400*1000);return isNaN(d.getTime())?null:d;}
   return null;
 }
-// Prazo: pode ser número de dias (float) ou data ISO
+// Parse prazo: número de dias (float) ou data direta
 function parsePrazo(raw){
   if(!raw&&raw!==0)return null;
   const s=String(raw).trim();
@@ -677,19 +697,24 @@ function parsePrazo(raw){
   if(d)return{tipo:'data',valor:d};
   return null;
 }
-// Calcula status de entrega: "Entrega realizada" | "Entrega próxima" | "X dias" | null
+// Parse ultimoReport string vindo do CSV
+function parseUltimoReport(raw){
+  if(!raw)return null;
+  const s=String(raw).trim();
+  if(!s)return null;
+  const d=parseDate(s)||new Date(s);
+  return isNaN(d.getTime())?null:d;
+}
+// Calcula status de prazo de entrega
 function calcPrazo(d){
-  // Se objeto executado preenchido E qtd executada > 0 → entrega realizada
   if(d.objetoExec&&d.qtdExecutada>0)return{status:'realizada',label:'Entrega realizada',cls:'entrega-ok'};
   if(!d.prazoEntrega)return null;
   let dataEntrega=null;
-  if(d.prazoEntrega.tipo==='data'){
-    dataEntrega=d.prazoEntrega.valor;
-  } else if(d.prazoEntrega.tipo==='dias'&&d.dataContrato){
+  if(d.prazoEntrega.tipo==='data') dataEntrega=d.prazoEntrega.valor;
+  else if(d.prazoEntrega.tipo==='dias'&&d.dataContrato)
     dataEntrega=new Date(d.dataContrato.getTime()+d.prazoEntrega.valor*86400*1000);
-  }
   if(!dataEntrega)return null;
-  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const hoje=new Date();hoje.setHours(0,0,0,0);
   const diff=Math.round((dataEntrega-hoje)/(86400*1000));
   if(diff<=0)return{status:'vencido',label:'Prazo vencido',cls:'entrega-vencida'};
   if(diff<=30)return{status:'proximo',label:'Entrega próxima',cls:'entrega-proxima'};
@@ -717,12 +742,15 @@ function populateFilters(){
   const anos=[...new Set(rawData.map(d=>d.ano).filter(Boolean))].sort();
   const statuses=['A iniciar','Iniciado','Encerrado','Cancelado'];
   const mods=[...new Set(rawData.map(d=>d.modalidade).filter(Boolean))].sort();
+  const objs=[...new Set(rawData.map(d=>d.objeto).filter(Boolean))].sort();
   fillSel('filterPrograma',progs,'Todos os programas');
   fillSel('filterAno',anos,'Todos os anos');
   fillSel('filterStatus',statuses,'Todos os status');
   fillSel('filterMonProg',progs,'Todos os programas');
   fillSel('filterMonStatus',statuses,'Todos os status');
   fillSel('filterMonMod',mods,'Todas as modalidades');
+  fillSel('filterMonAno',anos,'Todos os anos');
+  fillSel('filterMonObj',objs,'Todos os objetos');
 }
 function fillSel(id,vals,ph){
   const sel=document.getElementById(id); if(!sel)return;
@@ -907,64 +935,108 @@ function renderPipeline(){
 // ════════════════════════════════════
 // ABA 2 — ENTREGAS FÍSICAS
 // ════════════════════════════════════
+// ─── Filtro dois níveis: inicializa selects ao entrar na aba
+function initFiltEntregas(){
+  // Popula objetos para o eixo padrão (RMV)
+  onFiltEntEixo(true);
+}
+function onFiltEntEixo(init){
+  const eixo=document.getElementById('filtEntEixo').value;
+  const sel=document.getElementById('filtEntObj');
+  const objs=[...new Set(
+    rawData.filter(d=>d.programa===eixo&&d.statusMarco!=='Cancelado')
+           .map(d=>d.objeto).filter(Boolean)
+  )].sort();
+  sel.innerHTML='<option value="">Top 5 por valor</option>';
+  objs.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;sel.appendChild(op);});
+  renderChartEntregas();
+}
+function renderChartEntregas(){
+  const eixo=document.getElementById('filtEntEixo').value;
+  const objSel=document.getElementById('filtEntObj').value;
+  const base=rawData.filter(d=>d.programa===eixo&&d.statusMarco!=='Cancelado');
+  let labels, planData, execData;
+  const titleEl=document.getElementById('chartEntregasTitle');
+  if(objSel){
+    // Objeto específico selecionado
+    const rows=base.filter(d=>d.objeto===objSel);
+    labels=[objSel];
+    planData=[rows.reduce((s,d)=>s+d.qtdPlano,0)];
+    execData=[rows.reduce((s,d)=>s+d.qtdExecutada,0)];
+    if(titleEl)titleEl.textContent=`Qtd Planejada vs Executada — ${eixo} · ${objSel}`;
+  } else {
+    // Top 5 por Valor do Projeto agregado por objeto
+    const objMap={};
+    base.forEach(d=>{
+      if(!d.objeto)return;
+      if(!objMap[d.objeto])objMap[d.objeto]={plan:0,exec:0,vp:0};
+      objMap[d.objeto].plan+=d.qtdPlano;
+      objMap[d.objeto].exec+=d.qtdExecutada;
+      objMap[d.objeto].vp+=d.valorProjeto;
+    });
+    const top5=Object.entries(objMap).sort((a,b)=>b[1].vp-a[1].vp).slice(0,5);
+    labels=top5.map(e=>e[0]);
+    planData=top5.map(e=>e[1].plan);
+    execData=top5.map(e=>e[1].exec);
+    if(titleEl)titleEl.textContent=`Qtd Planejada vs Executada — ${eixo} · Top 5 por Valor`;
+  }
+  destroyChart('chartEntregas');
+  const ctx=document.getElementById('chartEntregas').getContext('2d');
+  charts['chartEntregas']=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Qtd Planejada',data:planData,backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},
+      {label:'Qtd Executada',data:execData,backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false},
+    ]},
+    options:{...CD,maintainAspectRatio:false,indexAxis:'y',
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>v>=1000?fmtM(v):v}},
+        y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}
+      },
+      plugins:{...CD.plugins,
+        legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},
+        tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')}`}}
+      }
+    }
+  });
+}
 function renderEntregas(){
   const data=filteredData.filter(d=>d.statusMarco!=='Cancelado');
 
-  // ── Gráficos de Entregas por Ano (coluna Ano Entrega) ──
+  // ── Gráficos de Entregas por Ano ──
   const anoEntregaMap={};
   data.forEach(d=>{
     const a=d.anoEntrega?String(d.anoEntrega).split('.')[0].trim():'';
     if(a&&a!=='0'&&a.length===4){anoEntregaMap[a]=(anoEntregaMap[a]||0)+1;}
   });
   const anosEnt=Object.keys(anoEntregaMap).sort();
-
   destroyChart('chartEntregasAno');
   if(anosEnt.length>0){
-    const ctx1=document.getElementById('chartEntregasAno').getContext('2d');
-    charts['chartEntregasAno']=new Chart(ctx1,{
+    charts['chartEntregasAno']=new Chart(document.getElementById('chartEntregasAno').getContext('2d'),{
       type:'bar',
-      data:{labels:anosEnt,datasets:[{
-        label:'Projetos entregues',
-        data:anosEnt.map(a=>anoEntregaMap[a]),
-        backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',
-        borderWidth:1,borderRadius:4,borderSkipped:false
-      }]},
+      data:{labels:anosEnt,datasets:[{label:'Projetos entregues',data:anosEnt.map(a=>anoEntregaMap[a]),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:4,borderSkipped:false}]},
       options:{...CD,maintainAspectRatio:false,
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},
-          y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},stepSize:1}}
-        },
-        plugins:{...CD.plugins,legend:{display:false},
-          tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.parsed.y} projeto(s)`}}}
+        scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},stepSize:1}}},
+        plugins:{...CD.plugins,legend:{display:false},tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.parsed.y} projeto(s)`}}}
       }
     });
   }
-
   destroyChart('chartEntregasAcum');
   if(anosEnt.length>0){
     let acum=0;
     const acumData=anosEnt.map(a=>{acum+=anoEntregaMap[a];return acum;});
-    const ctx2=document.getElementById('chartEntregasAcum').getContext('2d');
-    charts['chartEntregasAcum']=new Chart(ctx2,{
+    charts['chartEntregasAcum']=new Chart(document.getElementById('chartEntregasAcum').getContext('2d'),{
       type:'line',
-      data:{labels:anosEnt,datasets:[{
-        label:'Acumulado',
-        data:acumData,
-        borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.12)',
-        borderWidth:2,pointRadius:5,pointBackgroundColor:'#c9a84c',
-        fill:true,tension:0.3
-      }]},
+      data:{labels:anosEnt,datasets:[{label:'Acumulado',data:acumData,borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.12)',borderWidth:2,pointRadius:5,pointBackgroundColor:'#c9a84c',fill:true,tension:0.3}]},
       options:{...CD,maintainAspectRatio:false,
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},
-          y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},stepSize:1},min:0}
-        },
-        plugins:{...CD.plugins,legend:{display:false},
-          tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.parsed.y} no total`}}}
+        scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},stepSize:1},min:0}},
+        plugins:{...CD.plugins,legend:{display:false},tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.parsed.y} no total`}}}
       }
     });
   }
 
+  // ── Inicializa filtro dois níveis (só na primeira vez) ──
+  initFiltEntregas();
   // KPIs
   const totalPlan=data.reduce((s,d)=>s+d.qtdPlano,0);
   const totalProj=data.reduce((s,d)=>s+d.qtdProjeto,0);
@@ -1003,53 +1075,7 @@ function renderEntregas(){
   const objs=[...new Set(data.filter(d=>d.qtdPlano>0||d.qtdExecutada>0).map(d=>d.objeto).filter(Boolean))];
   const planByObj=objs.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdPlano,0));
   const execByObj=objs.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdExecutada,0));
-  // Separa objetos com qtd muito grande (>10k) para não distorcer escala
-  const LIMIAR = 10000;
-  const objsNorm = objs.filter((_,i)=>planByObj[i]<=LIMIAR);
-  const objsGrande = objs.filter((_,i)=>planByObj[i]>LIMIAR);
-
-  // Gráfico principal — objetos com qtd ≤ 10k (escala linear legível)
-  charts['chartEntregas']=new Chart(document.getElementById('chartEntregas').getContext('2d'),{
-    type:'bar',
-    data:{labels:objsNorm,datasets:[
-      {label:'Qtd Planejada',data:objsNorm.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdPlano,0)),backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},
-      {label:'Qtd Executada',data:objsNorm.map(o=>data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdExecutada,0)),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false},
-    ]},
-    options:{...CD,maintainAspectRatio:false,indexAxis:'y',
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10}}},
-        y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}
-      },
-      plugins:{...CD.plugins,
-        legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},
-        tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('pt-BR')}`}}
-      }
-    }
-  });
-
-  // Tabela suplementar para objetos com qtd > 10k (escala incompatível com gráfico)
-  const tblGrande = document.getElementById('tblGrande');
-  if(tblGrande){
-    if(objsGrande.length>0){
-      tblGrande.style.display='block';
-      document.getElementById('tblGrandeBody').innerHTML = objsGrande.map(o=>{
-        const plan=data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdPlano,0);
-        const exec=data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdExecutada,0);
-        const proj=data.filter(d=>d.objeto===o).reduce((s,d)=>s+d.qtdProjeto,0);
-        const pct=proj>0?Math.round(exec/proj*100):null;
-        const um=data.find(d=>d.objeto===o)?.um||'–';
-        return`<tr>
-          <td>${o}</td><td style="color:#8a96ab">${um}</td>
-          <td style="text-align:right;color:#c9a84c">${plan.toLocaleString('pt-BR')}</td>
-          <td style="text-align:right;color:#4b9fe8">${proj?proj.toLocaleString('pt-BR'):'–'}</td>
-          <td style="text-align:right;color:#3dbb77;font-weight:600">${exec?exec.toLocaleString('pt-BR'):'–'}</td>
-          <td>${pct!==null?`<span style="color:${pct>=100?'#3dbb77':pct<30?'#e05252':'#f0a840'};font-weight:700">${pct}%</span>`:'–'}</td>
-        </tr>`;
-      }).join('');
-    } else {
-      tblGrande.style.display='none';
-    }
-  }
+  // gráfico gerenciado por renderChartEntregas()
   // Tabela
   document.getElementById('tableEntregas').innerHTML=data.map(d=>{
     const pct=d.qtdProjeto>0?Math.round(d.qtdExecutada/d.qtdProjeto*100):null;
@@ -1151,22 +1177,35 @@ function renderMonitoramento(){
   const prog=document.getElementById('filterMonProg').value;
   const st=document.getElementById('filterMonStatus').value;
   const mod=document.getElementById('filterMonMod').value;
+  const ano=document.getElementById('filterMonAno').value;
+  const obj=document.getElementById('filterMonObj').value;
   const data=rawData.filter(d=>
-    (!prog||d.programa===prog)&&(!st||d.statusMarco===st)&&(!mod||d.modalidade===mod)
+    (!prog||d.programa===prog)&&
+    (!st||d.statusMarco===st)&&
+    (!mod||d.modalidade===mod)&&
+    (!ano||String(d.ano)===String(ano))&&
+    (!obj||d.objeto===obj)
   );
   // Alertas
   const hoje=new Date(); const LIM=30;
   const semReport=data.filter(d=>{
     if(d.statusMarco==='Encerrado'||d.statusMarco==='A iniciar'||d.statusMarco==='Cancelado')return false;
     if(!d.ultimoReport)return true;
-    const dt=new Date(d.ultimoReport); if(isNaN(dt))return false;
+    const dt=parseUltimoReport(d.ultimoReport);
+    if(!dt)return true; // sem data = considera sem atualização
     return(hoje-dt)/(1000*60*60*24)>LIM;
   });
   const alertStrip=document.getElementById('alertStrip');
   if(semReport.length>0){
-    alertStrip.innerHTML=`<div class="alert-item"><div class="alert-icon">⚠️</div><div class="alert-text"><strong>${semReport.length} projeto(s)</strong> sem atualização há mais de ${LIM} dias: ${semReport.map(d=>d.objeto).join(', ')}</div></div>`;
+    const projs=semReport.map(d=>{
+      const sgpe=(d.sgpeProjeto||'').replace(/\n/g,' · ');
+      const rpt=d.ultimoReport?String(d.ultimoReport).substring(0,10):'sem registro';
+      const label=`${d.objeto}${d.ta?' ('+d.ta+')':''}`;
+      return `<span class="alert-proj">${label}<span class="alert-tooltip">📋 SGP-e: ${sgpe||'–'}<br>🕐 Último report: ${rpt}</span></span>`;
+    }).join(', ');
+    alertStrip.innerHTML=`<div class="alert-item"><div class="alert-icon">⚠️</div><div class="alert-text"><strong>${semReport.length} projeto(s)</strong> sem atualização há mais de ${LIM} dias: ${projs}</div></div>`;
   } else {
-    alertStrip.innerHTML='';
+    alertStrip.innerHTML='<div class="alert-item" style="border-color:rgba(61,187,119,0.25);background:rgba(61,187,119,0.06)"><div class="alert-icon">✅</div><div class="alert-text" style="color:#3dbb77">Todos os projetos em dia</div></div>';
   }
   // Contagem por status
   const counts={};data.forEach(d=>{counts[d.statusMarco]=(counts[d.statusMarco]||0)+1;});
