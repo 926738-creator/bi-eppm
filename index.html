@@ -1089,8 +1089,12 @@ function generateReport(d){
   // ── Data máxima de entrega: dataContrato + prazoEntrega (dias)
   // Só exibe se empenhado e se houver dataContrato + prazo em dias
   const empenhado2=d.empenhado==='Sim'||((chave.emp)&&marcoAtual>=chave.emp);
-  if(empenhado2&&d.dataContrato&&d.prazoEntrega&&d.prazoEntrega.tipo==='dias'){
-    const dtMax=new Date(d.dataContrato.getTime()+d.prazoEntrega.valor*86400*1000);
+  // JSON.parse devolve dataContrato como string — reconverte para Date se necessário
+  const dtContrato=d.dataContrato instanceof Date
+    ? d.dataContrato
+    : (d.dataContrato ? parseDate(d.dataContrato) : null);
+  if(empenhado2&&dtContrato&&d.prazoEntrega&&d.prazoEntrega.tipo==='dias'){
+    const dtMax=new Date(dtContrato.getTime()+d.prazoEntrega.valor*86400*1000);
     const dtMaxStr=dtMax.toLocaleDateString('pt-BR');
     const hoje2=new Date();hoje2.setHours(0,0,0,0);
     const diff=Math.round((dtMax-hoje2)/(86400*1000));
