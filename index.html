@@ -661,7 +661,22 @@ function parseBRL(raw){
   if(lc>ld)s=s.replace(/\./g,'').replace(',','.');else if(ld>lc)s=s.replace(/,/g,'');
   const v=parseFloat(s);return isNaN(v)?0:v;
 }
-function parseNum(raw){if(!raw||String(raw).startsWith('='))return 0;const v=parseFloat(String(raw).replace(',','.'));return isNaN(v)?0:v;}
+function parseNum(raw){
+  if(!raw||String(raw).startsWith('='))return 0;
+  let s=String(raw).trim();
+  // Formato BR: ponto como separador de milhar (35.000 → 35000)
+  // Detecta: tem ponto E depois do último ponto há exatamente 3 dígitos → milhar
+  const lastDot=s.lastIndexOf('.');
+  const lastComma=s.lastIndexOf(',');
+  if(lastDot>lastComma && s.length-lastDot-1===3){
+    // ponto como milhar: remove pontos, troca vírgula por ponto
+    s=s.replace(/\./g,'').replace(',','.');
+  } else if(lastComma>lastDot){
+    // vírgula como decimal: remove pontos, troca vírgula por ponto
+    s=s.replace(/\./g,'').replace(',','.');
+  }
+  const v=parseFloat(s);return isNaN(v)?0:v;
+}
 
 // ══════════════════════════════════════════════════════════════
 // FILTERS
@@ -1003,29 +1018,35 @@ function generateReport(d){
   const marcoAtual=parseMarcoNum(d.marco);
   const chave=MARCOS_CHAVE[d.modalidade]||{};
   const linhas=[];
+
+  // ── Título
   linhas.push('*Report — '+(d.objeto||'Projeto FESP')+'*');
   linhas.push('');
+
+  // ── Dados gerais (sem Valor do Plano)
   linhas.push('*Programa:* '+(d.programa||'–')+' · *Ano:* '+(d.ano||'–')+(d.ta?' · *TA:* '+d.ta:''));
-  if(d.modalidade)linhas.push('*Modalidade:* '+d.modalidade);
-  if(d.valor>0)linhas.push('*Valor (Plano):* '+fmtBRL(d.valor));
-  if(d.valorProjeto>0)linhas.push('*Valor do Projeto:* '+fmtBRL(d.valorProjeto));
+  if(d.modalidade) linhas.push('*Modalidade:* '+d.modalidade);
+  if(d.valorProjeto>0) linhas.push('*Valor do Projeto:* '+fmtBRL(d.valorProjeto));
   linhas.push('');
+
+  // ── Situação
   const partes=[];
   if(d.statusMarco==='Encerrado'){
     partes.push('O projeto encontra-se *encerrado*');
-    if(d.valorExec>0)partes.push('com valor executado de *'+fmtBRL(d.valorExec)+'*');
+    if(d.valorExec>0) partes.push('com valor executado de *'+fmtBRL(d.valorExec)+'*');
   } else if(d.statusMarco==='A iniciar'){
     partes.push('O projeto *ainda não foi iniciado*');
   } else if(d.statusMarco==='Cancelado'){
     partes.push('O projeto encontra-se *cancelado*');
   } else {
-    partes.push('O projeto encontra-se *em andamento*');
+    // Iniciado → "em execução"
+    partes.push('O projeto encontra-se *em execução*');
     const empM=chave.emp;
     const empenhado=d.empenhado==='Sim'||(empM&&marcoAtual>=empM);
-    if(empenhado)partes.push('estando *empenhado*');
+    if(empenhado) partes.push('estando *empenhado*');
     const contM=chave.cont;
     const contratado=contM&&marcoAtual>=contM;
-    if(contratado)partes.push(empenhado?'e *contratado*':'sendo *contratado*');
+    if(contratado) partes.push(empenhado?'e *contratado*':'sendo *contratado*');
     const entPM=chave.entP;
     const recbM=chave.recb;
     const pagM=chave.pag;
@@ -1040,38 +1061,48 @@ function generateReport(d){
       partes.push('e *pagamento realizado*'+(d.valorExec>0?' no valor de *'+fmtBRL(d.valorExec)+'*':''));
     }
   }
-  if(partes.length>0)linhas.push(partes.join(', ')+'.');
+  if(partes.length>0) linhas.push(partes.join(', ')+'.');
   if(d.marco&&d.statusMarco!=='A iniciar'&&d.statusMarco!=='Cancelado'){
     linhas.push('*Marco atual:* '+d.marco);
   }
-  if(d.qtdPlano>0||d.qtdExecutada>0){
+
+  // ── Entregas físicas (sem Qtd Plano)
+  if(d.qtdProjeto>0||d.qtdExecutada>0){
     linhas.push('');
     linhas.push('*Entregas Físicas*');
-    if(d.qtdPlano>0)linhas.push('• Qtd prevista (plano): *'+fmtNum(d.qtdPlano)+'* '+(d.um||''));
-    if(d.qtdProjeto>0)linhas.push('• Qtd prevista (projeto): *'+fmtNum(d.qtdProjeto)+'* '+(d.um||''));
+    if(d.qtdProjeto>0) linhas.push('• Qtd prevista (projeto): *'+fmtNum(d.qtdProjeto)+'* '+(d.um||''));
     if(d.qtdExecutada>0){
       const pct=d.qtdProjeto>0?Math.round(d.qtdExecutada/d.qtdProjeto*100):null;
       linhas.push('• Qtd entregue: *'+fmtNum(d.qtdExecutada)+'* '+(d.um||'')+(pct!==null?' ('+pct+'% do projeto)':''));
     }
   }
-  if(d.prazoEntrega){
+
+  // ── Data máxima de entrega: dataContrato + prazoEntrega (dias)
+  // Só exibe se empenhado e se houver dataContrato + prazo em dias
+  const empenhado2=d.empenhado==='Sim'||((chave.emp)&&marcoAtual>=chave.emp);
+  if(empenhado2&&d.dataContrato&&d.prazoEntrega&&d.prazoEntrega.tipo==='dias'){
+    const dtMax=new Date(d.dataContrato.getTime()+d.prazoEntrega.valor*86400*1000);
+    const dtMaxStr=dtMax.toLocaleDateString('pt-BR');
+    const hoje2=new Date();hoje2.setHours(0,0,0,0);
+    const diff=Math.round((dtMax-hoje2)/(86400*1000));
+    let alerta='';
+    if(diff<0) alerta=' — ⚠️ prazo vencido';
+    else if(diff<=30) alerta=' — ⚠️ vence em '+diff+' dia(s)';
     linhas.push('');
-    if(d.prazoEntrega.tipo==='data'){
-      const dt=d.prazoEntrega.valor.toLocaleDateString('pt-BR');
-      const p=calcPrazo(d);
-      if(p&&p.status==='realizada')linhas.push('*Prazo de entrega:* '+dt+' — ✅ entrega realizada');
-      else if(p&&p.status==='vencido')linhas.push('*Prazo de entrega:* '+dt+' — ⚠️ prazo vencido');
-      else if(p&&p.status==='proximo')linhas.push('*Prazo de entrega:* '+dt+' — ⚠️ entrega próxima');
-      else linhas.push('*Prazo de entrega:* '+dt);
-    } else if(d.prazoEntrega.tipo==='dias'){
-      linhas.push('*Prazo de entrega:* '+d.prazoEntrega.valor+' dias após assinatura do contrato');
-    }
+    linhas.push('*Data máxima para entrega:* '+dtMaxStr+alerta);
+    linhas.push('_(Contrato + '+d.prazoEntrega.valor+' dias)_');
   } else if(d.anoEntrega){
     linhas.push('');
     linhas.push('*Ano de entrega previsto:* '+String(d.anoEntrega).split('.')[0]);
   }
-  if(d.sgpeExec){linhas.push('');linhas.push('*SGP-e Execução:* '+d.sgpeExec);}
-  if(d.statusReport){linhas.push('');linhas.push('*Último Status Report*');linhas.push(d.statusReport);}
+
+  // ── SGP-e
+  if(d.sgpeExec){
+    linhas.push('');
+    linhas.push('*SGP-e Execução:* '+d.sgpeExec);
+  }
+
+  // ── Rodapé
   linhas.push('');
   linhas.push('_Data da informação: '+hoje+'_');
   linhas.push('_Fonte: Painel de BI FESP — EPPM/EMG/PMSC_');
