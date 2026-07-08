@@ -528,6 +528,7 @@ function loadFromPaste(){
 const COL_MAP={
   ano:['ano'],programa:['programa'],ta:['nº ta','no ta','ta'],
   objeto:['objeto a ser adquirido','objeto'],
+  descricao:['descrição do objeto','descricao do objeto','descrição do projeto','descricao do projeto','descrição','descricao'],
   qtdPlano:['quantidade do plano'],um:['unidade de medida'],
   valor:['valor (r$)','valor'],aplicacao:['aplicação','aplicacao'],
   municipios:['municípios beneficiados','municipios beneficiados'],
@@ -586,6 +587,7 @@ function processData(rows){
     rawData.push({
       ano:anoNum,programa:prog.toUpperCase(),ta:get(r,'ta'),
       objeto:get(r,'objeto'),
+      descricao:get(r,'descricao'),
       qtdPlano:parseNum(get(r,'qtdPlano')),um:get(r,'um'),
       valor:parseBRL(get(r,'valor')),aplicacao:get(r,'aplicacao'),
       municipios:get(r,'municipios'),sgpeProjeto:get(r,'sgpeProjeto'),
