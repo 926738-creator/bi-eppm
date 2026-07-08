@@ -1038,7 +1038,9 @@ function generateReport(d){
   const linhas=[];
 
   // ── Título
-  linhas.push('*Report — '+(d.objeto||'Projeto FESP')+'*');
+  // Título: Objeto + Descrição (se houver)
+  const tituloObj=d.descricao?d.objeto+' — '+d.descricao:d.objeto||'Projeto FESP';
+  linhas.push('*Report — '+tituloObj+'*');
   linhas.push('');
 
   // ── Dados gerais (sem Valor do Plano)
