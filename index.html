@@ -401,6 +401,14 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
   <!-- ABA 3 EXECUÇÃO FINANCEIRA -->
   <div class="tab-panel" id="panel2">
     <div class="container">
+      <div class="filter-bar">
+        <span class="filter-label">Filtrar:</span>
+        <select id="finAno" onchange="renderExecFinanceira()"><option value="">Todos os anos</option></select>
+        <select id="finProg" onchange="renderExecFinanceira()"><option value="">Todos os programas</option></select>
+        <select id="finTA" onchange="renderExecFinanceira()"><option value="">Todos os TAs</option></select>
+        <select id="finObj" onchange="renderExecFinanceira()" style="min-width:170px"><option value="">Todos os objetos</option></select>
+        <button class="pf-btn" onclick="['finAno','finProg','finTA','finObj'].forEach(id=>document.getElementById(id).value='');renderExecFinanceira()">Limpar</button>
+      </div>
       <div class="exec-summary" id="execSummary"></div>
       <div class="charts-grid">
         <div class="chart-card col-6"><div class="chart-title">Valor por Programa (R$)</div><div class="chart-wrap" style="height:200px"><canvas id="chartExecProg"></canvas></div></div>
@@ -814,6 +822,12 @@ function populateFilters(){
   const mods=[...new Set(rawData.map(d=>d.modalidade).filter(Boolean))].sort();
   fillSel('filterPrograma',progs,'Todos os programas');
   fillSel('filterAno',anos,'Todos os anos');
+  {const base=rawData.filter(d=>d.statusMarco!=='Cancelado');const keep=id=>{const e=document.getElementById(id);return e?e.value:'';};const kv=['finAno','finProg','finTA','finObj'].map(keep);
+  fillSel('finAno',[...new Set(base.map(d=>String(d.ano)).filter(Boolean))].sort().reverse(),'Todos os anos');
+  fillSel('finProg',[...new Set(base.map(d=>d.programa).filter(Boolean))].sort(),'Todos os programas');
+  fillSel('finTA',[...new Set(base.map(d=>d.ta).filter(Boolean))].sort((a,b)=>{const y=t=>+(String(t).match(/(\d{4})/)||[0,0])[1];const n=t=>+(String(t).match(/(\d+)\//)||[0,0])[1];return y(b)-y(a)||n(a)-n(b);}),'Todos os TAs');
+  fillSel('finObj',[...new Set(base.map(d=>d.objeto).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')),'Todos os objetos');
+  ['finAno','finProg','finTA','finObj'].forEach((id,i)=>{const e=document.getElementById(id);if(e&&kv[i]&&[...e.options].some(o=>o.value===kv[i]))e.value=kv[i];});}
   fillSel('filterTA',[...new Set(allData.map(d=>d.ta).filter(Boolean))].sort((a,b)=>{const y=t=>+(String(t).match(/(\d{4})/)||[0,0])[1];const n=t=>+(String(t).match(/(\d+)\//)||[0,0])[1];return y(b)-y(a)||n(a)-n(b);}),'Todos os TAs');
   fillSel('filterObjeto',[...new Set(allData.filter(isAtivo).map(d=>familiaDe(d)))].sort((a,b)=>a.localeCompare(b,'pt-BR')),'Todos os objetos');
   fillSel('filterStatus',FASES_IG,'Todas as fases');
@@ -1203,7 +1217,9 @@ function finInfo(d){
   return{liq,liqCls,liqTxt,quitado,eco,ecoTxt,saldo,saldoBase:d.valor>0?'plano':'projeto'};
 }
 function renderExecFinanceira(){
-  const data=filteredData.filter(d=>d.statusMarco!=='Cancelado');
+  const fv=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  const fAno=fv('finAno'),fProg=fv('finProg'),fTA=fv('finTA'),fObj=fv('finObj');
+  const data=rawData.filter(d=>d.statusMarco!=='Cancelado'&&(!fAno||String(d.ano)===fAno)&&(!fProg||d.programa===fProg)&&(!fTA||d.ta===fTA)&&(!fObj||d.objeto===fObj));
   const totPlano=data.reduce((s,d)=>s+d.valor,0);
   const totProj=data.reduce((s,d)=>s+d.valorProjeto,0);
   const totExec=data.reduce((s,d)=>s+d.valorExec,0);
