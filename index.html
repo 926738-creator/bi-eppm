@@ -180,6 +180,64 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
 .btn-copy:hover{background:rgba(75,159,232,0.3)}
 .btn-copy.copied{background:rgba(61,187,119,0.2);border-color:rgba(61,187,119,0.4);color:#3dbb77}
 .report-hint{font-size:10px;color:var(--gray);align-self:center}
+
+/* ===== PORTFÓLIO IG 10-801 ===== */
+.fam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-bottom:14px;align-items:start}
+.fam-card{background:var(--card-bg);border:1px solid var(--border);border-left:4px solid #4b9fe8;border-radius:8px;padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
+.fam-card.fam-est{border-left-color:#c9a84c;background:linear-gradient(135deg,rgba(201,168,76,0.07),transparent 60%),var(--card-bg)}
+.fam-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.fam-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.8px;text-transform:uppercase;color:var(--white);line-height:1.15}
+.fam-icon{margin-right:6px}
+.fam-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;color:var(--gold-light);margin:6px 0 2px}
+.fam-meta{font-size:11px;color:var(--gray)}
+.fam-specs{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 4px}
+.fam-specs span{font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--gray-light)}
+.fam-exec{margin-top:10px;font-size:10px;color:var(--gray)}
+.fam-exec .prog-exec{margin-bottom:3px}
+.fam-fases{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--gray-light)}
+.fam-fase i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.fam-det{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.fam-det summary{cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+.fam-det table td,.fam-det table th{font-size:11px}
+.fam-card:has(.fam-det[open]){grid-column:1/-1}
+
+.badge-estrategico{background:rgba(201,168,76,0.2);color:#e8c96a;border:1px solid #c9a84c66}
+.badge-institucional{background:rgba(75,159,232,0.14);color:#8cc2f2;border:1px solid #4b9fe844}
+.badge-local{background:rgba(138,150,171,0.18);color:#b8c1d1;border:1px solid #8a96ab44}
+.badge-iniciacao{background:rgba(138,150,171,0.18);color:#b8c1d1;border:1px solid #8a96ab44}
+.badge-apensado{background:rgba(196,107,232,0.15);color:#c46be8;border:1px solid #c46be844}
+.badge-encerramento{background:rgba(61,187,119,0.10);color:#7fd6a5;border:1px solid #3dbb7733}
+.pf-search{flex:1;min-width:220px;background:rgba(0,0,0,0.25);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:4px;font-family:'Barlow',sans-serif;font-size:12px}
+.pf-search::placeholder{color:var(--gray)}
+.pf-btn{background:rgba(201,168,76,0.15);border:1px solid #c9a84c66;color:var(--gold-light);padding:6px 12px;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.pf-btn:hover{background:rgba(201,168,76,0.3)}
+.pf-note{font-size:11px;color:var(--gray);margin:-6px 0 10px;line-height:1.5}
+.pf-note b{color:var(--gold-light);font-weight:600}
+.pf-table td,.pf-table th{white-space:nowrap}
+.pf-table td.pf-obj{white-space:normal;min-width:220px;max-width:340px}
+.pf-code{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;color:var(--gold-light)}
+.pf-prov{color:var(--gray);font-weight:400}
+.pf-crit{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:12px;line-height:1.6;color:var(--gray-light)}
+.pf-crit summary{cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-size:12px}
+.pf-crit h4{font-family:'Barlow Condensed',sans-serif;color:var(--gold-light);font-size:13px;letter-spacing:1px;margin:12px 0 4px;text-transform:uppercase}
+.pf-crit ul{margin-left:18px}
+.pf-empty{text-align:center;color:var(--gray);padding:18px}
+#pfPrint{display:none}
+@media print{
+  body.print-pf{background:#fff!important;color:#000!important}
+  body.print-pf>*:not(#pfPrint){display:none!important}
+  body.print-pf #pfPrint{display:block;font-family:Arial,sans-serif;font-size:9px;color:#000}
+  #pfPrint h1{font-size:14px;margin-bottom:2px}
+  #pfPrint .pp-sub{font-size:9px;color:#444;margin-bottom:8px}
+  #pfPrint table{width:100%;border-collapse:collapse}
+  #pfPrint *{color:#000!important;text-shadow:none!important;letter-spacing:normal!important;text-transform:none!important;font-family:Arial,sans-serif!important}
+  #pfPrint th,#pfPrint td{border:1px solid #999;padding:3px 4px;text-align:left;vertical-align:top;background:#fff!important;font-size:8px!important;white-space:normal!important;position:static!important}
+  #pfPrint th{background:#e6e6e6!important;font-weight:700}
+  #pfPrint tr{page-break-inside:avoid}
+  #pfPrint tr.pp-fam td{background:#d9d9d9!important;font-size:9px!important}
+  #pfPrint .pp-foot{margin-top:8px;font-size:8px;color:#444}
+  @page{size:A4 landscape;margin:10mm}
+}
 /* ERROR */
 #errorMsg{display:none}
 @media(max-width:900px){.col-4,.col-5,.col-6,.col-7,.col-8{grid-column:span 12}.exec-summary{grid-template-columns:1fr}}
@@ -241,7 +299,7 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
     <button class="tab-btn" onclick="switchTab(3)" id="tab3"><span class="tab-icon">📋</span> Monitoramento</button>
   </div>
 
-  <!-- ABA 1 PORTFÓLIO -->
+  <!-- ABA 1 PORTFÓLIO (IG 10-801) -->
   <div class="tab-panel active" id="panel0">
     <div class="container">
       <div class="kpi-strip" id="kpiStrip"></div>
@@ -251,24 +309,54 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
         <select id="filterPrograma" onchange="applyFilters()"><option value="">Todos os programas</option></select>
         <select id="filterAno" onchange="applyFilters()"><option value="">Todos os anos</option></select>
         <select id="filterAplicacao" onchange="applyFilters()"><option value="">Custeio / Investimento</option><option value="Custeio">Custeio</option><option value="Investimento">Investimento</option></select>
-        <select id="filterStatus" onchange="applyFilters()"><option value="">Todos os status</option></select>
+        <select id="filterStatus" onchange="applyFilters()"><option value="">Todas as fases</option></select>
+        <select id="filterAbrang" onchange="applyFilters()"><option value="">Toda abrangência</option></select>
+        <select id="filterTipo" onchange="applyFilters()"><option value="">Todos os tipos</option></select>
+        <select id="filterPorte" onchange="applyFilters()"><option value="">Todos os portes</option></select>
       </div>
       <div class="charts-grid">
-        <div class="chart-card col-4"><div class="chart-title">Projetos por Programa</div><div class="chart-wrap" style="height:200px"><canvas id="chartPrograma"></canvas></div></div>
-        <div class="chart-card col-4"><div class="chart-title">Valor por Programa (R$)</div><div class="chart-wrap" style="height:200px"><canvas id="chartValorPrograma"></canvas></div></div>
-        <div class="chart-card col-4"><div class="chart-title">Custeio vs Investimento</div><div class="chart-wrap" style="height:200px"><canvas id="chartAplicacao"></canvas></div></div>
+        <div class="chart-card col-4"><div class="chart-title">Abrangência (valor do plano)</div><div class="chart-wrap" style="height:200px"><canvas id="chartAbrang"></canvas></div></div>
+        <div class="chart-card col-4"><div class="chart-title">Fase do Ciclo de Vida (art. 8º)</div><div class="chart-wrap" style="height:200px"><canvas id="chartFase"></canvas></div></div>
+        <div class="chart-card col-4"><div class="chart-title">Porte do Projeto</div><div class="chart-wrap" style="height:200px"><canvas id="chartPorte"></canvas></div></div>
       </div>
       <div class="charts-grid">
-        <div class="chart-card col-6"><div class="chart-title">Projetos por Ano</div><div class="chart-wrap" style="height:180px"><canvas id="chartAno"></canvas></div></div>
-        <div class="chart-card col-6"><div class="chart-title">Distribuição por Status</div><div class="chart-wrap" style="height:180px"><canvas id="chartStatus"></canvas></div></div>
+        <div class="chart-card col-6"><div class="chart-title">Tipo do Projeto (art. 3º, XIX)</div><div class="chart-wrap" style="height:220px"><canvas id="chartTipo"></canvas></div></div>
+        <div class="chart-card col-6"><div class="chart-title">Valor por Ano e Programa (R$)</div><div class="chart-wrap" style="height:220px"><canvas id="chartValorAno"></canvas></div></div>
       </div>
-      <div class="charts-grid">
-        <div class="chart-card col-12"><div class="chart-title">Valor por Ano e Programa (R$)</div><div class="chart-wrap" style="height:200px"><canvas id="chartValorAno"></canvas></div></div>
+      <div class="section-hdr">Portfólio por Família de Objeto — art. 21, §5º</div>
+      <div class="filter-bar">
+        <input id="pfSearch" class="pf-search" type="search" placeholder="Consta no portfólio? Busque por objeto, calibre, SGP-e, município ou código…" oninput="renderPortfolioTable()">
+        <button class="pf-btn" onclick="clearPfFilters()">Limpar filtros</button>
+        <button class="pf-btn" onclick="printPortfolio()">🖨 Imprimir / PDF</button>
       </div>
+      <div class="pf-note" id="pfNote"></div>
+      <div class="fam-grid" id="pfCards"></div>
       <div id="pipelineSection" style="display:none">
-        <div class="section-hdr">Pipeline — Projetos a Iniciar</div>
+        <div class="section-hdr">Projetos em Iniciação — aguardando Termo de Abertura (art. 21, §6º)</div>
         <div class="pipeline-grid" id="pipelineGrid"></div>
       </div>
+      <details class="pf-crit">
+        <summary>Critérios de classificação — IG 10-801</summary>
+        <h4>Abrangência (art. 3º, III a V)</h4>
+        <ul>
+          <li><b>Estratégico:</b> declarado pelo Comandante-Geral ou oriundo de Planos de Comando e diretrizes estratégicas, bem como aquele cuja não realização compromete a continuidade, a segurança ou a capacidade operacional do serviço policial militar em âmbito estadual ou supra-regional, gerando prejuízo à Instituição e não apenas a uma OPM ou localidade.</li>
+          <li><b>Institucional:</b> abrangência regional ou estadual, de iniciativa de Diretorias e órgãos do Comando-Geral.</li>
+          <li><b>Local:</b> abrangência local, de iniciativa dos comandos locais.</li>
+          <li>Quando a coluna <i>Abrangência</i> da planilha está preenchida, ela prevalece. Caso contrário, aplica-se a regra padrão: munições, radiocomunicação, fardamento, TASER, servidor de TI, APH tático, coletes e renovação de frota do RMV (exceto viatura isolada) e computadores do COPOM são estratégicos; os demais, institucionais.</li>
+        </ul>
+        <h4>Fase do ciclo de vida (art. 8º)</h4>
+        <ul>
+          <li><b>Iniciação:</b> projeto sem marco registrado ou não iniciado, ainda sem Termo de Abertura.</li>
+          <li><b>Planejamento:</b> Termo de Abertura emitido (art. 21, §6º) até a aprovação dos planos/PGP.</li>
+          <li><b>Execução:</b> planos aprovados (art. 33, parágrafo único), adesão, licitação, empenho, contrato e entrega.</li>
+          <li><b>Encerramento:</b> pagamento realizado e Relatório de Conclusão do Projeto (art. 66 e 69).</li>
+          <li><b>Encerrado:</b> Termo de Encerramento juntado. <b>Cancelado</b> e <b>Apensado</b> ficam registrados para histórico.</li>
+        </ul>
+        <h4>Porte (art. 3º, XVIII)</h4>
+        <ul><li>Pequeno: até R$ 500 mil · Médio: até R$ 3 milhões · Grande: acima de R$ 3 milhões (valor do projeto ou, na falta, valor do plano).</li></ul>
+        <h4>Código</h4>
+        <ul><li>Lido da coluna <i>Código do Projeto</i> da planilha. Na falta, é gerado um código provisório (marcado com *), que pode mudar se linhas forem inseridas na planilha.</li></ul>
+      </details>
     </div>
   </div>
 
@@ -469,7 +557,7 @@ const MARCOS_CHAVE={
 // ══════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════
-let rawData=[],filteredData=[],charts={},activeTab=0;
+let rawData=[],filteredData=[],charts={},activeTab=0,allData=[],pfData=[];
 let _currentDrillData=null; // projeto aberto no modal
 
 // ══════════════════════════════════════════════════════════════
@@ -546,6 +634,9 @@ const COL_MAP={
   marco:['cronograma','marco'],
   ultimoReport:['último report (data)','ultimo report (data)'],
   statusReport:['status report'],
+  codigo:['código do projeto','codigo do projeto'],
+  abrangencia:['abrangência','abrangencia'],
+  tipoManual:['tipo (ajuste manual)','tipo ajuste manual'],
 };
 
 function buildColIndex(hdr){
@@ -576,15 +667,14 @@ function processData(rows){
   if(hdrIdx<0)hdrIdx=1;
   const ci=buildColIndex(rows[hdrIdx]);
   const get=(r,f)=>String(r[ci[f]]??'').trim();
-  rawData=[];
+  rawData=[];allData=[];
   for(let i=hdrIdx+1;i<rows.length;i++){
     const r=rows[i];
     const anoRaw=get(r,'ano');const anoNum=parseFloat(anoRaw);
     if(!anoRaw||isNaN(anoNum)||anoNum<2000||anoNum>2100)continue;
     const prog=get(r,'programa');if(!prog||prog.length>10)continue;
     const marcoRaw=get(r,'marco');const statusMarco=classifyMarco(marcoRaw);
-    if(statusMarco==='Apensado')continue;
-    rawData.push({
+    allData.push({
       ano:anoNum,programa:prog.toUpperCase(),ta:get(r,'ta'),
       objeto:get(r,'objeto'),
       descricao:get(r,'descricao'),
@@ -603,11 +693,16 @@ function processData(rows){
       qtdExecutada:parseNum(get(r,'qtdExecutada')),valorExec:parseBRL(get(r,'valorExec')),
       marco:marcoRaw,statusMarco,
       ultimoReport:get(r,'ultimoReport'),statusReport:get(r,'statusReport'),
+      codigoPlan:ci.codigo!==undefined?get(r,'codigo'):'',
+      abrangPlan:ci.abrangencia!==undefined?get(r,'abrangencia'):'',
+      tipoPlan:ci.tipoManual!==undefined?get(r,'tipoManual'):'',
     });
   }
+  classifyIG(allData);
+  rawData=allData.filter(d=>d.statusMarco!=='Apensado');
   if(rawData.length===0){document.getElementById('loadingOverlay').style.display='none';document.getElementById('errorMsg').style.display='block';return;}
   populateFilters();
-  filteredData=[...rawData];
+  filteredData=[...rawData];pfData=[...allData];
   renderAll();updateDate();
   document.getElementById('loadingOverlay').style.display='none';
   document.getElementById('dashboard').style.display='block';
@@ -700,7 +795,10 @@ function populateFilters(){
   const mods=[...new Set(rawData.map(d=>d.modalidade).filter(Boolean))].sort();
   fillSel('filterPrograma',progs,'Todos os programas');
   fillSel('filterAno',anos,'Todos os anos');
-  fillSel('filterStatus',statuses,'Todos os status');
+  fillSel('filterStatus',FASES_IG,'Todas as fases');
+  fillSel('filterAbrang',['Estratégico','Institucional','Local'].filter(a=>allData.some(d=>d.abrang===a)),'Toda abrangência');
+  fillSel('filterTipo',TIPOS_IG.filter(t=>allData.some(d=>d.tipo===t)),'Todos os tipos');
+  fillSel('filterPorte',PORTES.filter(t=>allData.some(d=>d.porte===t)),'Todos os portes');
   const objs=[...new Set(rawData.map(d=>d.objeto).filter(Boolean))].sort();
   fillSel('filterMonProg',progs,'Todos os programas');
   fillSel('filterMonAno',anos,'Todos os anos');
@@ -714,12 +812,15 @@ function fillSel(id,vals,ph){
   vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
 }
 function applyFilters(){
-  const prog=document.getElementById('filterPrograma').value;
-  const ano=document.getElementById('filterAno').value;
-  const apl=document.getElementById('filterAplicacao').value;
-  const st=document.getElementById('filterStatus').value;
-  filteredData=rawData.filter(d=>(!prog||d.programa===prog)&&(!ano||String(d.ano)===String(ano))&&(!apl||d.aplicacao===apl)&&(!st||d.statusMarco===st));
+  const v=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  const prog=v('filterPrograma'),ano=v('filterAno'),apl=v('filterAplicacao'),fase=v('filterStatus'),ab=v('filterAbrang'),tp=v('filterTipo'),pt=v('filterPorte');
+  const m=d=>(!prog||d.programa===prog)&&(!ano||String(d.ano)===String(ano))&&(!apl||d.aplicacao===apl)&&(!fase||d.fase===fase)&&(!ab||d.abrang===ab)&&(!tp||d.tipo===tp)&&(!pt||d.porte===pt);
+  filteredData=rawData.filter(m);pfData=allData.filter(m);
   renderAll();
+}
+function clearPfFilters(){
+  ['filterPrograma','filterAno','filterAplicacao','filterStatus','filterAbrang','filterTipo','filterPorte','pfSearch'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  applyFilters();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -736,7 +837,7 @@ function switchTab(n){
 // RENDER ALL
 // ══════════════════════════════════════════════════════════════
 function renderAll(){
-  if(activeTab===0){renderKPIs();renderProgCards();renderPortfolioCharts();renderPipeline();}
+  if(activeTab===0){renderKPIs();renderProgCards();renderPortfolioCharts();renderPortfolioTable();renderPipeline();}
   else if(activeTab===1){renderEntregas();}
   else if(activeTab===2){renderExecFinanceira();}
   else if(activeTab===3){renderMonitoramento();}
@@ -759,74 +860,252 @@ function aplicacaoBadge(a){if(!a)return'–';const isC=a==='Custeio';return`<spa
 // ══════════════════════════════════════════════════════════════
 // ABA 1 — PORTFÓLIO
 // ══════════════════════════════════════════════════════════════
+// ── Classificação IG 10-801 ──────────────────────────────────
+const FASES_IG=['Iniciação','Planejamento','Execução','Encerramento','Encerrado','Cancelado','Apensado'];
+const FASE_ATIVA=['Iniciação','Planejamento','Execução','Encerramento','Encerrado'];
+const FASE_IG_COLORS={'Iniciação':'#8a96ab','Planejamento':'#f0a840','Execução':'#4b9fe8','Encerramento':'#7fd6a5','Encerrado':'#3dbb77','Cancelado':'#e05252','Apensado':'#c46be8'};
+const FASE_BADGE={'Iniciação':'badge-iniciacao','Planejamento':'badge-planejamento','Execução':'badge-execucao','Encerramento':'badge-encerramento','Encerrado':'badge-encerrado','Cancelado':'badge-cancelado','Apensado':'badge-apensado'};
+const TIPOS_IG=['Renovação logística','Tecnologia da informação e comunicação','Capacitação e treinamento','Saúde física ou mental','Projetos sociais','Obras e afins','Melhoria de processos','A classificar'];
+const PORTES=['Pequeno','Médio','Grande','Não informado'];
+const ABR_COLORS={'Estratégico':'#c9a84c','Institucional':'#4b9fe8','Local':'#8a96ab'};
+const nrm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+
+function classifyFaseIG(m){
+  const s=nrm(m);
+  if(!s)return'Iniciação';
+  if(s.includes('apensado'))return'Apensado';
+  if(s.includes('cancelad'))return'Cancelado';
+  if(s.includes('nao inici')||s==='a iniciar')return'Iniciação';
+  if(s.includes('termo de encerramento'))return'Encerrado';
+  if(s.includes('relatorio de conclusao')||s.includes('pagamento realizado'))return'Encerramento';
+  if(s.includes('termo de abertura'))return'Planejamento';
+  if(s.includes('plano')&&!s.includes('aprovad'))return'Planejamento';
+  if(/entrega|contrato|pregao|licita|empenh|adesao|homolog|aprovad|edital|certame/.test(s))return'Execução';
+  const n=parseMarcoNum(m);
+  if(n<=1)return'Iniciação';if(n<=6)return'Planejamento';if(n<=15)return'Execução';if(n<=17)return'Encerramento';return'Encerrado';
+}
+function classifyTipo(obj){
+  const o=nrm(obj);
+  if(/academia|musculacao|psicoterap|exame|funcional|raio-x|odontolog|digitalizador|piso emborrachado|saude/.test(o))return'Saúde física ou mental';
+  if(/seminario|capacitacao|pos-graduacao|curso|treinamento/.test(o))return'Capacitação e treinamento';
+  if(/notebook|computador|software|smartphone|radiocomunica|projetor|servidor|sistema|tablet/.test(o))return'Tecnologia da informação e comunicação';
+  if(/obra|reforma|construcao|engenharia/.test(o))return'Obras e afins';
+  if(/material grafico|campanha/.test(o))return'Projetos sociais';
+  if(/viatura|munic|colete|taser|fardamento|cinto|bota|armamento|epi|aph|mobiliario|ar-condicionado|equipamento/.test(o))return'Renovação logística';
+  return'A classificar';
+}
+function normTipo(t){const n=nrm(t);if(!n)return'';return TIPOS_IG.find(x=>nrm(x)===n)||TIPOS_IG.find(x=>nrm(x).startsWith(n.slice(0,6)))||t;}
+function classifyPorte(d){
+  const v=d.valorProjeto>0?d.valorProjeto:d.valor;
+  if(!v)return'Não informado';if(v<=500000)return'Pequeno';if(v<=3000000)return'Médio';return'Grande';
+}
+function abrangPadrao(d){
+  const o=nrm(d.objeto);
+  if(/munic|radiocomunica|fardamento|taser|servidor|aph tatico/.test(o))return'Estratégico';
+  if(d.programa==='RMV'){
+    if(o.includes('viatura')&&d.qtdPlano!==1)return'Estratégico';
+    if(o.includes('colete'))return'Estratégico';
+    if(o.includes('computador')&&/copom/i.test(d.municipios))return'Estratégico';
+  }
+  return'Institucional';
+}
+function normAbrang(a){const n=nrm(a);if(!n)return'';if(n.startsWith('estrat'))return'Estratégico';if(n.startsWith('instit'))return'Institucional';if(n.startsWith('local'))return'Local';return'';}
+function classifyIG(list){
+  const seq={};
+  list.forEach(d=>{
+    d.fase=classifyFaseIG(d.marco);
+    d.tipo=normTipo(d.tipoPlan)||classifyTipo(d.objeto);
+    d.porte=classifyPorte(d);
+    const ap=normAbrang(d.abrangPlan);
+    d.abrang=ap||abrangPadrao(d);d.abrangOrigem=ap?'planilha':'regra';
+    const k=d.programa+'-'+d.ano;seq[k]=(seq[k]||0)+1;
+    if(d.codigoPlan){d.codigo=d.codigoPlan;d.codigoProv=false;}
+    else{d.codigo=`${d.programa}-${d.ano}-${String(seq[k]).padStart(2,'0')}`;d.codigoProv=true;}
+  });
+}
+const isAtivo=d=>d.fase!=='Cancelado'&&d.fase!=='Apensado';
+function faseBadge(f){return`<span class="badge ${FASE_BADGE[f]||'badge-nao-iniciado'}">${f||'–'}</span>`;}
+function abrangBadge(d){const c={'Estratégico':'badge-estrategico','Institucional':'badge-institucional','Local':'badge-local'}[d.abrang]||'badge-local';return`<span class="badge ${c}" title="${d.abrangOrigem==='planilha'?'Definido na planilha':'Regra padrão (sem definição na planilha)'}">${d.abrang}${d.abrangOrigem==='regra'?' ·':''}</span>`;}
+function esc(t){return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+// ══════════════════════════════════════════════════════════════
+// ABA 1 — PORTFÓLIO (IG 10-801)
+// ══════════════════════════════════════════════════════════════
 function renderKPIs(){
-  const data=filteredData;
-  const ativos=data.filter(d=>d.statusMarco!=='Cancelado');
+  const ativos=pfData.filter(isAtivo);
+  const est=ativos.filter(d=>d.abrang==='Estratégico');
   const totalVal=ativos.reduce((s,d)=>s+d.valor,0);
   const totalExec=ativos.reduce((s,d)=>s+d.valorExec,0);
-  const iniciados=ativos.filter(d=>d.statusMarco==='Iniciado').length;
-  const encerrados=ativos.filter(d=>d.statusMarco==='Encerrado').length;
-  const aIniciar=ativos.filter(d=>d.statusMarco==='A iniciar').length;
-  const cancelados=data.filter(d=>d.statusMarco==='Cancelado').length;
-  const progs=new Set(ativos.map(d=>d.programa).filter(Boolean)).size;
-  const entregues=data.filter(d=>{const a=parseFloat(String(d.anoEntrega).split('.')[0]);return!isNaN(a)&&a>=2000&&a<=2100;}).length;
+  const estVal=est.reduce((s,d)=>s+d.valor,0);
+  const cnt=f=>ativos.filter(d=>d.fase===f).length;
+  const inat=pfData.filter(d=>!isAtivo(d)).length;
   const kpis=[
-    {label:'Total de Projetos',value:ativos.length,sub:`${progs} programas · excl. cancelados`,icon:'📋',accent:'#c9a84c'},
-    {label:'Valor Total',value:'R$ '+fmtM(totalVal),sub:'plano de aplicação',icon:'💰',accent:'#3dbb77'},
-    {label:'Valor Executado',value:totalExec>0?'R$ '+fmtM(totalExec):'–',sub:'valor pago / executado',icon:'✔',accent:'#3dbb77'},
-    {label:'Iniciados',value:iniciados,sub:'em andamento',icon:'⚡',accent:'#4b9fe8'},
-    {label:'Projetos Entregues',value:entregues,sub:'com ano de entrega registrado',icon:'🏁',accent:'#3dbb77'},
-    {label:'A Iniciar',value:aIniciar,sub:'pipeline',icon:'⏳',accent:'#f0a840'},
-    {label:'Cancelados',value:cancelados,sub:'não contabilizados',icon:'🚫',accent:'#e05252'},
+    {label:'Projetos no Portfólio',value:ativos.length,sub:'excl. cancelados e apensados',icon:'📋',accent:'#c9a84c'},
+    {label:'Estratégicos',value:est.length,sub:'R$ '+fmtM(estVal)+' · '+(totalVal?Math.round(estVal/totalVal*100):0)+'% do valor',icon:'⭐',accent:'#e8c96a'},
+    {label:'Valor do Portfólio',value:'R$ '+fmtM(totalVal),sub:'plano de aplicação',icon:'💰',accent:'#3dbb77'},
+    {label:'Valor Executado',value:totalExec>0?'R$ '+fmtM(totalExec):'–',sub:(totalVal?Math.round(totalExec/totalVal*100):0)+'% do plano',icon:'✔',accent:'#3dbb77'},
+    {label:'Iniciação / Planej.',value:cnt('Iniciação')+cnt('Planejamento'),sub:`${cnt('Iniciação')} iniciação · ${cnt('Planejamento')} planejamento`,icon:'⏳',accent:'#f0a840'},
+    {label:'Em Execução',value:cnt('Execução'),sub:'adesão, licitação, contrato, entrega',icon:'⚡',accent:'#4b9fe8'},
+    {label:'Encerramento / Encerrados',value:cnt('Encerramento')+cnt('Encerrado'),sub:`${cnt('Encerramento')} em encerramento · ${cnt('Encerrado')} encerrados`,icon:'🏁',accent:'#3dbb77'},
+    {label:'Cancelados / Apensados',value:inat,sub:'mantidos para histórico',icon:'🗂',accent:'#e05252'},
   ];
   document.getElementById('kpiStrip').innerHTML=kpis.map(k=>`<div class="kpi-card" style="--accent:${k.accent}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-sub">${k.sub}</div><div class="kpi-icon">${k.icon}</div></div>`).join('');
 }
 
 function renderProgCards(){
   const counts={},values={};
-  filteredData.filter(d=>d.statusMarco!=='Cancelado').forEach(d=>{if(!d.programa)return;counts[d.programa]=(counts[d.programa]||0)+1;values[d.programa]=(values[d.programa]||0)+d.valor;});
-  const total=filteredData.filter(d=>d.statusMarco!=='Cancelado').length||1;
+  const at=pfData.filter(isAtivo);
+  at.forEach(d=>{if(!d.programa)return;counts[d.programa]=(counts[d.programa]||0)+1;values[d.programa]=(values[d.programa]||0)+d.valor;});
+  const total=at.length||1;
   document.getElementById('progCards').innerHTML=Object.keys(counts).sort().map(p=>`<div class="prog-card"><div class="prog-card-header"><div class="prog-name" style="color:${PROG_COLORS[p]||'#c9a84c'}">${p}</div><div class="prog-count" style="color:${PROG_COLORS[p]||'#c9a84c'}">${counts[p]}</div></div><div class="prog-total">R$ ${fmtM(values[p])}</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${Math.round(counts[p]/total*100)}%;background:${PROG_COLORS[p]||'#c9a84c'}"></div></div></div>`).join('');
 }
 
+function hBar(id,labels,data,colors,fmt){
+  destroyChart(id);
+  charts[id]=new Chart(document.getElementById(id).getContext('2d'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},precision:0}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10}}}},plugins:{...CD.plugins,legend:{display:false},tooltip:{...CD.plugins.tooltip,callbacks:{label:fmt||(ctx=>ctx.parsed.x+' projeto(s)')}}}}});
+}
 function renderPortfolioCharts(){
-  destroyChart('chartPrograma');
-  const cp={};filteredData.forEach(d=>{if(d.programa)cp[d.programa]=(cp[d.programa]||0)+1;});
-  const cpL=Object.keys(cp).sort();
-  charts['chartPrograma']=new Chart(document.getElementById('chartPrograma').getContext('2d'),{type:'doughnut',data:{labels:cpL,datasets:[{data:cpL.map(l=>cp[l]),backgroundColor:cpL.map(l=>PROG_COLORS[l]||'#c9a84c'),borderColor:'#0b1e3d',borderWidth:3,hoverOffset:6}]},options:{...CD,maintainAspectRatio:false,cutout:'62%',plugins:{...CD.plugins,legend:{position:'bottom',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12,padding:12}}}}});
-  destroyChart('chartValorPrograma');
-  const vp={};filteredData.forEach(d=>{if(d.programa)vp[d.programa]=(vp[d.programa]||0)+d.valor;});
-  const vpL=Object.keys(vp).sort();
-  charts['chartValorPrograma']=new Chart(document.getElementById('chartValorPrograma').getContext('2d'),{type:'bar',data:{labels:vpL,datasets:[{label:'Valor',data:vpL.map(l=>vp[l]),backgroundColor:vpL.map(l=>PROG_COLORS[l]||'#c9a84c'),borderRadius:4,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>'R$ '+fmtM(v)}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}}},plugins:{...CD.plugins,legend:{display:false},tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>'R$ '+fmtM(ctx.parsed.x)}}}}});
-  destroyChart('chartAplicacao');
-  const ap={Custeio:0,Investimento:0,Outro:0};filteredData.forEach(d=>{if(d.aplicacao==='Custeio')ap.Custeio++;else if(d.aplicacao==='Investimento')ap.Investimento++;else ap.Outro++;});
-  const apL=Object.keys(ap).filter(k=>ap[k]>0);
-  charts['chartAplicacao']=new Chart(document.getElementById('chartAplicacao').getContext('2d'),{type:'pie',data:{labels:apL,datasets:[{data:apL.map(l=>ap[l]),backgroundColor:['#4b9fe8','#e87a4b','#8a96ab'],borderColor:'#0b1e3d',borderWidth:3,hoverOffset:6}]},options:{...CD,maintainAspectRatio:false,plugins:{...CD.plugins,legend:{position:'bottom',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12,padding:12}}}}});
-  destroyChart('chartAno');
-  const ca={};filteredData.forEach(d=>{if(d.ano)ca[d.ano]=(ca[d.ano]||0)+1;});
-  const caL=Object.keys(ca).sort();
-  charts['chartAno']=new Chart(document.getElementById('chartAno').getContext('2d'),{type:'bar',data:{labels:caL,datasets:[{label:'Projetos',data:caL.map(l=>ca[l]),backgroundColor:'rgba(201,168,76,0.75)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10}}}},plugins:{...CD.plugins,legend:{display:false}}}});
-  destroyChart('chartStatus');
-  const cs={};filteredData.forEach(d=>{const k=d.statusMarco||'A iniciar';cs[k]=(cs[k]||0)+1;});
-  const ORDER=['Iniciado','Encerrado','A iniciar','Cancelado'];
-  const csL=ORDER.filter(k=>cs[k]);
-  const cMap={Iniciado:'#4b9fe8',Encerrado:'#3dbb77','A iniciar':'#f0a840',Cancelado:'#e05252'};
-  charts['chartStatus']=new Chart(document.getElementById('chartStatus').getContext('2d'),{type:'bar',data:{labels:csL,datasets:[{label:'Projetos',data:csL.map(l=>cs[l]),backgroundColor:csL.map(l=>cMap[l]||'#c9a84c'),borderRadius:4,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}},plugins:{...CD.plugins,legend:{display:false}}}});
+  const at=pfData.filter(isAtivo);
+  // Abrangência por valor
+  destroyChart('chartAbrang');
+  const ab={};at.forEach(d=>{ab[d.abrang]=(ab[d.abrang]||0)+d.valor;});
+  const abL=['Estratégico','Institucional','Local'].filter(k=>ab[k]);
+  const abN={};at.forEach(d=>{abN[d.abrang]=(abN[d.abrang]||0)+1;});
+  charts['chartAbrang']=new Chart(document.getElementById('chartAbrang').getContext('2d'),{type:'doughnut',data:{labels:abL.map(l=>`${l} (${abN[l]})`),datasets:[{data:abL.map(l=>ab[l]),backgroundColor:abL.map(l=>ABR_COLORS[l]),borderColor:'#0b1e3d',borderWidth:3,hoverOffset:6}]},options:{...CD,maintainAspectRatio:false,cutout:'62%',plugins:{...CD.plugins,legend:{position:'bottom',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12,padding:12}},tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>' R$ '+fmtM(ctx.parsed)}}}}});
+  // Fase (inclui cancelados/apensados)
+  const fs={};pfData.forEach(d=>{fs[d.fase]=(fs[d.fase]||0)+1;});
+  const fL=FASES_IG.filter(f=>fs[f]);
+  hBar('chartFase',fL,fL.map(f=>fs[f]),fL.map(f=>FASE_IG_COLORS[f]));
+  // Porte
+  const pt={};at.forEach(d=>{pt[d.porte]=(pt[d.porte]||0)+1;});
+  const pL=PORTES.filter(p=>pt[p]);
+  hBar('chartPorte',pL,pL.map(p=>pt[p]),['#7fd6a5','#4b9fe8','#c9a84c','#8a96ab'].slice(0,4).filter((c,i)=>pt[PORTES[i]]));
+  // Tipo
+  const tp={},tv={};at.forEach(d=>{tp[d.tipo]=(tp[d.tipo]||0)+1;tv[d.tipo]=(tv[d.tipo]||0)+d.valor;});
+  const tL=TIPOS_IG.filter(t=>tp[t]).sort((a,b)=>tv[b]-tv[a]);
+  hBar('chartTipo',tL,tL.map(t=>tp[t]),tL.map(t=>t==='A classificar'?'#e05252':'rgba(201,168,76,0.75)'),ctx=>`${ctx.parsed.x} projeto(s) · R$ ${fmtM(tv[ctx.label])}`);
+  // Valor por ano e programa
   destroyChart('chartValorAno');
-  const progs=[...new Set(filteredData.map(d=>d.programa).filter(Boolean))].sort();
-  const anos=[...new Set(filteredData.map(d=>d.ano).filter(Boolean))].sort();
-  charts['chartValorAno']=new Chart(document.getElementById('chartValorAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:progs.map(p=>({label:p,data:anos.map(a=>filteredData.filter(d=>d.programa===p&&d.ano===a).reduce((s,d)=>s+d.valor,0)),backgroundColor:hexAlpha(PROG_COLORS[p]||'#c9a84c',0.7),borderColor:PROG_COLORS[p]||'#c9a84c',borderWidth:1,borderRadius:4,borderSkipped:false}))},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>'R$ '+fmtM(v)}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: R$ ${fmtM(ctx.parsed.y)}`}}}}});
+  const progs=[...new Set(at.map(d=>d.programa).filter(Boolean))].sort();
+  const anos=[...new Set(at.map(d=>d.ano).filter(Boolean))].sort();
+  charts['chartValorAno']=new Chart(document.getElementById('chartValorAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:progs.map(p=>({label:p,data:anos.map(a=>at.filter(d=>d.programa===p&&d.ano===a).reduce((s,d)=>s+d.valor,0)),backgroundColor:hexAlpha(PROG_COLORS[p]||'#c9a84c',0.7),borderColor:PROG_COLORS[p]||'#c9a84c',borderWidth:1,borderRadius:4,borderSkipped:false}))},options:{...CD,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{stacked:true,grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>'R$ '+fmtM(v)}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: R$ ${fmtM(ctx.parsed.y)}`}}}}});
+}
+
+// ── Famílias de objeto (cards) ───────────────────────────────
+function familiaDe(d){
+  const o=nrm(d.objeto);
+  if(o.includes('radiocomunica'))return'Radiocomunicação';
+  if(o.includes('munic'))return'Munições';
+  if(o.includes('viatura'))return'Viaturas Policiais';
+  if(o.includes('taser'))return'TASER-10 (Incapacitação Neuromuscular)';
+  if(o.includes('colete'))return'Coletes de Proteção Balística';
+  if(o.includes('radiocomunica'))return'Radiocomunicação';
+  if(/computador|notebook|servidor/.test(o))return'Informática';
+  if(/academia|musculacao|piso emborrachado|treinamento funcional/.test(o))return'Academias e Treinamento Físico';
+  if(/raio-x|digitalizador|odontolog/.test(o))return'Odontologia';
+  if(o.includes('seminario'))return'Seminários';
+  if(o.includes('psicoterap'))return'Psicoterapia';
+  return d.objeto||'Não informado';
+}
+const FAM_ICON={'Munições':'🎯','Viaturas Policiais':'🚓','TASER-10 (Incapacitação Neuromuscular)':'⚡','Coletes de Proteção Balística':'🛡','Radiocomunicação':'📻','Informática':'💻','Academias e Treinamento Físico':'🏋','Odontologia':'🦷','Seminários':'🎓','Psicoterapia':'🧠','Fardamento':'👕','APH Tático':'⛑','Material Gráfico':'📄','Armamento':'🔫','EPI':'🦺','Exames laboratoriais e cardiológicos':'🩺'};
+function specsDe(fam,rows){
+  const set=new Set();
+  const txt=rows.map(d=>nrm(d.objeto+' '+d.descricao)).join(' | ');
+  const has=re=>re.test(txt);
+  if(fam==='Munições'){
+    if(has(/9 ?mm/))set.add('9mm');if(has(/5[,.]56/))set.add('5,56mm');if(has(/7[,.]62/))set.add('7,62mm');
+    if(has(/calibre 12|cal\.? ?12|calibres?:[^|]*\b12\b/))set.add('cal. 12');if(has(/\.40|calibre 40/))set.add('.40');
+    if(has(/nao[- ]letal|alma lisa/))set.add('não letal');
+  }else if(fam==='Viaturas Policiais'){
+    if(has(/semi-?blindad/))set.add('SUV semi-blindada III-A');if(has(/\bvan\b/))set.add('Van (antibomba, PC, bases móveis)');
+    if(has(/4x2|veiculo leve/))set.add('Veículo leve 4x2');if(has(/radiopatrulha/))set.add('Radiopatrulha');
+    if(has(/equipes medicas|odontolog|psicolog/))set.add('Apoio à saúde');if(has(/rede catarina/))set.add('Rede Catarina');
+    if(has(/viaturas operacionais/))set.add('Operacionais');
+  }else if(fam.startsWith('TASER')){
+    if(has(/kit dce|taser ?10|item 1/))set.add('Kit DCE (arma, bateria, carregador)');if(has(/cartucho/))set.add('Cartuchos');
+    if(has(/treinamento/))set.add('Treinamento');if(has(/licenca/))set.add('Licenças');
+  }else if(fam.startsWith('Coletes')){
+    if(has(/iii-?a/))set.add('Nível III-A');if(has(/rede catarina/))set.add('Rede Catarina');
+  }else{
+    const objs=[...new Set(rows.map(d=>d.objeto).filter(Boolean))];
+    if(objs.length>1)objs.forEach(o=>set.add(o));
+    else{const ds=[...new Set(rows.map(d=>d.descricao).filter(Boolean))];if(ds.length===1&&nrm(ds[0])!==nrm(objs[0]))set.add(trunc(ds[0],110));}
+  }
+  return[...set];
+}
+function buildFamilias(rows){
+  const m={};
+  rows.forEach(d=>{const f=familiaDe(d);(m[f]=m[f]||[]).push(d);});
+  return Object.entries(m).map(([nome,its])=>{
+    const ums=[...new Set(its.map(d=>d.um).filter(Boolean))];
+    const qtd=its.reduce((s,d)=>s+(d.qtdPlano||0),0);
+    const nEst=its.filter(d=>d.abrang==='Estratégico').length;
+    const fases={};its.forEach(d=>{fases[d.fase]=(fases[d.fase]||0)+1;});
+    return{nome,itens:its.sort((a,b)=>b.ano-a.ano||b.valor-a.valor),valor:its.reduce((s,d)=>s+d.valor,0),exec:its.reduce((s,d)=>s+d.valorExec,0),
+      qtd,um:ums.length===1?ums[0]:'',nEst,est:nEst>0,specs:specsDe(nome,its),fases,
+      progs:[...new Set(its.map(d=>d.programa))].sort(),tipo:its[0].tipo,anos:[Math.min(...its.map(d=>d.ano)),Math.max(...its.map(d=>d.ano))]};
+  }).sort((a,b)=>(b.est-a.est)||(b.valor-a.valor));
+}
+function pfRows(){
+  const q=nrm((document.getElementById('pfSearch')||{}).value||'');
+  return pfData.filter(isAtivo).filter(d=>!q||nrm([d.codigo,d.programa,d.objeto,d.descricao,d.municipios,d.sgpeProjeto,d.sgpeExec,d.tipo,d.abrang,d.fase,familiaDe(d)].join(' ')).includes(q));
+}
+function plural(um,q){if(q<=1)return um;return um.split(' ').map(w=>/[aeiouáéó]$/i.test(w)&&!/^(PM|de|da|do)$/i.test(w)?w+'s':w).join(' ');}
+function fmtQtd(f){if(!f.qtd||!f.um)return'';const v=f.qtd>=1e6?(f.qtd/1e6).toFixed(2).replace('.',',')+' mi':fmtNum(f.qtd);return`${v} ${esc(plural(f.um,f.qtd).toLowerCase())}`;}
+function renderPortfolioTable(){
+  const rows=pfRows();const fams=buildFamilias(rows);
+  const q=(document.getElementById('pfSearch')||{}).value||'';
+  const prov=allData.filter(d=>d.codigoProv).length,regra=allData.filter(d=>d.abrangOrigem==='regra').length;
+  let note=`<b>${fams.length}</b> família(s) de objeto · <b>${rows.length}</b> projeto(s) ativo(s) · R$ ${fmtM(rows.reduce((s,d)=>s+d.valor,0))}. Cancelados e apensados não entram nos cards.`;
+  if(q)note+=rows.length?` Resultado para “${esc(q)}”.`:` <b>Nada encontrado para “${esc(q)}” — o objeto não consta do portfólio FESP.</b>`;
+  const pend=[];if(prov)pend.push(`${prov} sem <i>Código do Projeto</i> (código provisório *)`);if(regra)pend.push(`${regra} com abrangência pela regra padrão`);
+  if(pend.length)note+=' Pendências de cadastro: '+pend.join('; ')+'.';
+  document.getElementById('pfNote').innerHTML=note;
+  const el=document.getElementById('pfCards');
+  if(!fams.length){el.innerHTML='<div class="pf-empty">Nenhum projeto encontrado.</div>';return;}
+  el.innerHTML=fams.map(f=>{
+    const n=f.itens.length;
+    const ab=f.est?(f.nEst===n?'<span class="badge badge-estrategico">⭐ Estratégico</span>':`<span class="badge badge-estrategico">⭐ Estratégico · ${f.nEst} de ${n}</span>`):'<span class="badge badge-institucional">Institucional</span>';
+    const pct=f.valor?Math.round(f.exec/f.valor*100):0;
+    const fasesHtml=FASES_IG.filter(x=>f.fases[x]).map(x=>`<span class="fam-fase"><i style="background:${FASE_IG_COLORS[x]}"></i>${f.fases[x]} ${x.toLowerCase()}</span>`).join('');
+    const det=f.itens.map(d=>`<tr><td><span class="pf-code">${esc(d.codigo)}${d.codigoProv?'<span class="pf-prov">*</span>':''}</span></td><td style="color:${PROG_COLORS[d.programa]||'#c9a84c'};font-weight:600">${d.programa}</td><td>${d.ano}</td><td class="pf-obj">${esc(d.descricao||d.objeto)}${d.municipios?`<div style="font-size:10px;color:#8a96ab">${esc(trunc(d.municipios,80))}</div>`:''}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):'–'}</td><td>${faseBadge(d.fase)}<div style="font-size:10px;color:#8a96ab;margin-top:2px">${esc(d.marco)||''}</div></td><td>${fmtBRL(d.valor)}</td><td>${sgpeCell(d)!=='–'?sgpeCell(d):(d.sgpeProjeto?esc(d.sgpeProjeto):'–')}</td></tr>`).join('');
+    return`<div class="fam-card${f.est?' fam-est':''}">
+      <div class="fam-head"><div class="fam-name"><span class="fam-icon">${FAM_ICON[f.nome]||'📦'}</span>${esc(f.nome)}</div>${ab}</div>
+      <div class="fam-val">R$ ${fmtM(f.valor)}</div>
+      <div class="fam-meta">${n} projeto${n>1?'s':''}${fmtQtd(f)?' · '+fmtQtd(f):''} · ${f.progs.join(', ')} · ${f.anos[0]===f.anos[1]?f.anos[0]:f.anos[0]+'–'+f.anos[1]}</div>
+      ${f.specs.length?`<div class="fam-specs">${f.specs.map(s=>`<span>${esc(s)}</span>`).join('')}</div>`:''}
+      <div class="fam-exec"><div class="prog-exec"><div class="prog-exec-fill ${pct>=100?'':pct<30?'danger':pct<70?'warn':''}" style="width:${Math.min(pct,100)}%"></div></div><span>${f.exec?'Executado R$ '+fmtM(f.exec)+' · '+pct+'%':'Sem execução financeira registrada'}</span></div>
+      <div class="fam-fases">${fasesHtml}</div>
+      <details class="fam-det"><summary>Ver projetos (${n})</summary><div class="table-wrap" style="max-height:340px"><table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Fase IG</th><th>Valor plano</th><th>SGP-e</th></tr></thead><tbody>${det}</tbody></table></div></details>
+    </div>`;}).join('');
 }
 
 function renderPipeline(){
-  const pipeline=filteredData.filter(d=>d.statusMarco==='A iniciar');
+  const pipeline=pfData.filter(d=>d.fase==='Iniciação');
   const sec=document.getElementById('pipelineSection');
   if(pipeline.length===0){sec.style.display='none';return;}
   sec.style.display='block';
-  document.getElementById('pipelineGrid').innerHTML=pipeline.map(d=>`<div class="pipeline-card"><div class="pipeline-tag">${d.programa} · ${d.ano} · ${d.ta||'–'}</div><div class="pipeline-obj">${d.objeto||'–'}</div><div class="pipeline-meta"><span>💰 ${fmtBRL(d.valor)}</span><span>${aplicacaoBadge(d.aplicacao)}</span>${d.um?`<span style="color:#8a96ab">${d.um}</span>`:''}</div></div>`).join('');
+  document.getElementById('pipelineGrid').innerHTML=pipeline.map(d=>`<div class="pipeline-card" style="border-left-color:${ABR_COLORS[d.abrang]||'#8a96ab'}"><div class="pipeline-tag">${esc(d.codigo)}${d.codigoProv?'*':''} · ${d.programa} · ${d.ano} · ${esc(d.ta)||'–'}</div><div class="pipeline-obj">${esc(d.objeto)||'–'}</div><div class="pipeline-meta"><span>💰 ${fmtBRL(d.valor)}</span><span>${aplicacaoBadge(d.aplicacao)}</span>${abrangBadge(d)}</div></div>`).join('');
 }
 
-// ══════════════════════════════════════
+function printPortfolio(){
+  const rows=pfRows();const fams=buildFamilias(rows);
+  const filtros=[['filterPrograma','Programa'],['filterAno','Ano'],['filterAplicacao','Aplicação'],['filterStatus','Fase'],['filterAbrang','Abrangência'],['filterTipo','Tipo'],['filterPorte','Porte'],['pfSearch','Busca']].map(([id,l])=>{const e=document.getElementById(id);return e&&e.value?`${l}: ${e.value}`:null;}).filter(Boolean);
+  let el=document.getElementById('pfPrint');if(!el){el=document.createElement('div');el.id='pfPrint';document.body.appendChild(el);}
+  el.innerHTML=`<h1>Polícia Militar de Santa Catarina — Portfólio de Projetos (IG 10-801, art. 21, §5º)</h1>
+  <div class="pp-sub">EMG / Escritório de Projetos da Polícia Militar · Fonte: Planilha FESP Fundo a Fundo · Emitido em ${new Date().toLocaleString('pt-BR')} · ${filtros.length?'Filtros: '+esc(filtros.join(' · ')):'Sem filtros'} · ${fams.length} família(s), ${rows.length} projeto(s) ativo(s) · Valor do plano: ${fmtBRL(rows.reduce((s,d)=>s+d.valor,0))}</div>
+  <table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Abrangência</th><th>Fase IG</th><th>Último marco</th><th>Valor plano</th><th>Valor exec.</th><th>SGP-e</th></tr></thead><tbody>
+  ${fams.map(f=>`<tr class="pp-fam"><td colspan="11"><b>${esc(f.nome)}</b> — ${f.est?'Estratégico'+(f.nEst<f.itens.length?` (${f.nEst} de ${f.itens.length})`:''):'Institucional'} · ${f.itens.length} projeto(s) · ${fmtBRL(f.valor)}${fmtQtd(f)?' · '+fmtQtd(f):''}${f.specs.length?' · '+esc(f.specs.join(', ')):''}</td></tr>`+
+    f.itens.map(d=>`<tr><td>${esc(d.codigo)}${d.codigoProv?'*':''}</td><td>${esc(d.programa)}</td><td>${d.ano}</td><td>${esc(d.descricao||d.objeto)}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):''}</td><td>${esc(d.abrang)}</td><td>${esc(d.fase)}</td><td>${esc(d.marco)}</td><td>${fmtBRL(d.valor)}</td><td>${d.valorExec?fmtBRL(d.valorExec):'–'}</td><td>${esc(d.sgpeExec||d.sgpeProjeto)}</td></tr>`).join('')).join('')}
+  </tbody></table>
+  <div class="pp-foot">* Código provisório (sem "Código do Projeto" na planilha). Cancelados e apensados não constam. Abrangência conforme art. 3º, III a V; fase conforme art. 8º. A presença no portfólio confere conhecimento e autorização prévia, não substituindo a aprovação do projeto.</div>`;
+  document.body.classList.add('print-pf');
+  const done=()=>{document.body.classList.remove('print-pf');window.removeEventListener('afterprint',done);};
+  window.addEventListener('afterprint',done);
+  window.print();
+  setTimeout(done,1000);
+}
+
 // ══════════════════════════════════════════════════════════════
 // ABA 2 — ENTREGAS FÍSICAS
 // ══════════════════════════════════════════════════════════════
