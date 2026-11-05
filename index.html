@@ -752,8 +752,15 @@ function parseUltimoReport(raw){
   const br=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);if(br)return new Date(Number(br[3]),Number(br[2])-1,Number(br[1]));
   return null;
 }
+// Entrega realizada: informada pela execução (objeto + qtd) OU pelo marco
+// (entrega/serviço realizado, recebimento, pagamento, RCP ou encerramento).
+function entregaRealizada(d){
+  if(d.objetoExec&&d.qtdExecutada>0)return true;
+  const m=String(d.marco||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return /entrega ou servico realizad|entrega realizad|servico realizad|recebiment|pagamento realizad|relatorio de conclusao|termo de encerramento/.test(m);
+}
 function calcPrazo(d){
-  if(d.objetoExec&&d.qtdExecutada>0)return{status:'realizada',label:'Entrega realizada',cls:'entrega-ok'};
+  if(entregaRealizada(d))return{status:'realizada',label:'Entrega realizada',cls:'entrega-ok'};
   if(!d.prazoEntrega)return null;
   let dataEntrega=null;
   if(d.prazoEntrega.tipo==='data')dataEntrega=d.prazoEntrega.valor;
@@ -1386,7 +1393,10 @@ function generateReport(d){
   const dtContrato=d.dataContrato instanceof Date
     ? d.dataContrato
     : (d.dataContrato ? parseDate(d.dataContrato) : null);
-  if(empenhado2&&dtContrato&&d.prazoEntrega&&d.prazoEntrega.tipo==='dias'){
+  if(entregaRealizada(d)){
+    linhas.push('');
+    linhas.push('*Entrega:* realizada');
+  } else if(empenhado2&&dtContrato&&d.prazoEntrega&&d.prazoEntrega.tipo==='dias'){
     const dtMax=new Date(dtContrato.getTime()+d.prazoEntrega.valor*86400*1000);
     const dtMaxStr=dtMax.toLocaleDateString('pt-BR');
     const hoje2=new Date();hoje2.setHours(0,0,0,0);
