@@ -182,6 +182,25 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
 .report-hint{font-size:10px;color:var(--gray);align-self:center}
 
 /* ===== PORTFÓLIO IG 10-801 ===== */
+.fam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-bottom:14px;align-items:start}
+.fam-card{background:var(--card-bg);border:1px solid var(--border);border-left:4px solid #4b9fe8;border-radius:8px;padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
+.fam-card.fam-est{border-left-color:#c9a84c;background:linear-gradient(135deg,rgba(201,168,76,0.07),transparent 60%),var(--card-bg)}
+.fam-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.fam-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.8px;text-transform:uppercase;color:var(--white);line-height:1.15}
+.fam-icon{margin-right:6px}
+.fam-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;color:var(--gold-light);margin:6px 0 2px}
+.fam-meta{font-size:11px;color:var(--gray)}
+.fam-specs{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 4px}
+.fam-specs span{font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--gray-light)}
+.fam-exec{margin-top:10px;font-size:10px;color:var(--gray)}
+.fam-exec .prog-exec{margin-bottom:3px}
+.fam-fases{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--gray-light)}
+.fam-fase i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.fam-det{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.fam-det summary{cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+.fam-det table td,.fam-det table th{font-size:11px}
+.fam-card:has(.fam-det[open]){grid-column:1/-1}
+
 .badge-estrategico{background:rgba(201,168,76,0.2);color:#e8c96a;border:1px solid #c9a84c66}
 .badge-institucional{background:rgba(75,159,232,0.14);color:#8cc2f2;border:1px solid #4b9fe844}
 .badge-local{background:rgba(138,150,171,0.18);color:#b8c1d1;border:1px solid #8a96ab44}
@@ -215,6 +234,7 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
   #pfPrint th,#pfPrint td{border:1px solid #999;padding:3px 4px;text-align:left;vertical-align:top;background:#fff!important;font-size:8px!important;white-space:normal!important;position:static!important}
   #pfPrint th{background:#e6e6e6!important;font-weight:700}
   #pfPrint tr{page-break-inside:avoid}
+  #pfPrint tr.pp-fam td{background:#d9d9d9!important;font-size:9px!important}
   #pfPrint .pp-foot{margin-top:8px;font-size:8px;color:#444}
   @page{size:A4 landscape;margin:10mm}
 }
@@ -303,18 +323,14 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
         <div class="chart-card col-6"><div class="chart-title">Tipo do Projeto (art. 3º, XIX)</div><div class="chart-wrap" style="height:220px"><canvas id="chartTipo"></canvas></div></div>
         <div class="chart-card col-6"><div class="chart-title">Valor por Ano e Programa (R$)</div><div class="chart-wrap" style="height:220px"><canvas id="chartValorAno"></canvas></div></div>
       </div>
-      <div class="section-hdr">Relação de Projetos do Portfólio — art. 21, §5º</div>
+      <div class="section-hdr">Portfólio por Família de Objeto — art. 21, §5º</div>
       <div class="filter-bar">
-        <input id="pfSearch" class="pf-search" type="search" placeholder="Consta no portfólio? Busque por objeto, SGP-e, município, TA ou código…" oninput="renderPortfolioTable()">
+        <input id="pfSearch" class="pf-search" type="search" placeholder="Consta no portfólio? Busque por objeto, calibre, SGP-e, município ou código…" oninput="renderPortfolioTable()">
         <button class="pf-btn" onclick="clearPfFilters()">Limpar filtros</button>
         <button class="pf-btn" onclick="printPortfolio()">🖨 Imprimir / PDF</button>
       </div>
       <div class="pf-note" id="pfNote"></div>
-      <div class="chart-card col-12" style="padding:8px">
-        <div class="table-wrap" style="max-height:560px">
-          <table class="pf-table"><thead><tr><th>Código</th><th>Prog.</th><th>TA</th><th>Objeto</th><th>Tipo</th><th>Porte</th><th>Abrangência</th><th>Fase IG</th><th>Último marco</th><th>Valor plano</th><th>Valor projeto</th><th>Valor exec.</th><th>SGP-e</th></tr></thead><tbody id="tablePortfolio"></tbody></table>
-        </div>
-      </div>
+      <div class="fam-grid" id="pfCards"></div>
       <div id="pipelineSection" style="display:none">
         <div class="section-hdr">Projetos em Iniciação — aguardando Termo de Abertura (art. 21, §6º)</div>
         <div class="pipeline-grid" id="pipelineGrid"></div>
@@ -975,36 +991,93 @@ function renderPortfolioCharts(){
   charts['chartValorAno']=new Chart(document.getElementById('chartValorAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:progs.map(p=>({label:p,data:anos.map(a=>at.filter(d=>d.programa===p&&d.ano===a).reduce((s,d)=>s+d.valor,0)),backgroundColor:hexAlpha(PROG_COLORS[p]||'#c9a84c',0.7),borderColor:PROG_COLORS[p]||'#c9a84c',borderWidth:1,borderRadius:4,borderSkipped:false}))},options:{...CD,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{stacked:true,grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>'R$ '+fmtM(v)}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: R$ ${fmtM(ctx.parsed.y)}`}}}}});
 }
 
+// ── Famílias de objeto (cards) ───────────────────────────────
+function familiaDe(d){
+  const o=nrm(d.objeto);
+  if(o.includes('radiocomunica'))return'Radiocomunicação';
+  if(o.includes('munic'))return'Munições';
+  if(o.includes('viatura'))return'Viaturas Policiais';
+  if(o.includes('taser'))return'TASER-10 (Incapacitação Neuromuscular)';
+  if(o.includes('colete'))return'Coletes de Proteção Balística';
+  if(o.includes('radiocomunica'))return'Radiocomunicação';
+  if(/computador|notebook|servidor/.test(o))return'Informática';
+  if(/academia|musculacao|piso emborrachado|treinamento funcional/.test(o))return'Academias e Treinamento Físico';
+  if(/raio-x|digitalizador|odontolog/.test(o))return'Odontologia';
+  if(o.includes('seminario'))return'Seminários';
+  if(o.includes('psicoterap'))return'Psicoterapia';
+  return d.objeto||'Não informado';
+}
+const FAM_ICON={'Munições':'🎯','Viaturas Policiais':'🚓','TASER-10 (Incapacitação Neuromuscular)':'⚡','Coletes de Proteção Balística':'🛡','Radiocomunicação':'📻','Informática':'💻','Academias e Treinamento Físico':'🏋','Odontologia':'🦷','Seminários':'🎓','Psicoterapia':'🧠','Fardamento':'👕','APH Tático':'⛑','Material Gráfico':'📄','Armamento':'🔫','EPI':'🦺','Exames laboratoriais e cardiológicos':'🩺'};
+function specsDe(fam,rows){
+  const set=new Set();
+  const txt=rows.map(d=>nrm(d.objeto+' '+d.descricao)).join(' | ');
+  const has=re=>re.test(txt);
+  if(fam==='Munições'){
+    if(has(/9 ?mm/))set.add('9mm');if(has(/5[,.]56/))set.add('5,56mm');if(has(/7[,.]62/))set.add('7,62mm');
+    if(has(/calibre 12|cal\.? ?12|calibres?:[^|]*\b12\b/))set.add('cal. 12');if(has(/\.40|calibre 40/))set.add('.40');
+    if(has(/nao[- ]letal|alma lisa/))set.add('não letal');
+  }else if(fam==='Viaturas Policiais'){
+    if(has(/semi-?blindad/))set.add('SUV semi-blindada III-A');if(has(/\bvan\b/))set.add('Van (antibomba, PC, bases móveis)');
+    if(has(/4x2|veiculo leve/))set.add('Veículo leve 4x2');if(has(/radiopatrulha/))set.add('Radiopatrulha');
+    if(has(/equipes medicas|odontolog|psicolog/))set.add('Apoio à saúde');if(has(/rede catarina/))set.add('Rede Catarina');
+    if(has(/viaturas operacionais/))set.add('Operacionais');
+  }else if(fam.startsWith('TASER')){
+    if(has(/kit dce|taser ?10|item 1/))set.add('Kit DCE (arma, bateria, carregador)');if(has(/cartucho/))set.add('Cartuchos');
+    if(has(/treinamento/))set.add('Treinamento');if(has(/licenca/))set.add('Licenças');
+  }else if(fam.startsWith('Coletes')){
+    if(has(/iii-?a/))set.add('Nível III-A');if(has(/rede catarina/))set.add('Rede Catarina');
+  }else{
+    const objs=[...new Set(rows.map(d=>d.objeto).filter(Boolean))];
+    if(objs.length>1)objs.forEach(o=>set.add(o));
+    else{const ds=[...new Set(rows.map(d=>d.descricao).filter(Boolean))];if(ds.length===1&&nrm(ds[0])!==nrm(objs[0]))set.add(trunc(ds[0],110));}
+  }
+  return[...set];
+}
+function buildFamilias(rows){
+  const m={};
+  rows.forEach(d=>{const f=familiaDe(d);(m[f]=m[f]||[]).push(d);});
+  return Object.entries(m).map(([nome,its])=>{
+    const ums=[...new Set(its.map(d=>d.um).filter(Boolean))];
+    const qtd=its.reduce((s,d)=>s+(d.qtdPlano||0),0);
+    const nEst=its.filter(d=>d.abrang==='Estratégico').length;
+    const fases={};its.forEach(d=>{fases[d.fase]=(fases[d.fase]||0)+1;});
+    return{nome,itens:its.sort((a,b)=>b.ano-a.ano||b.valor-a.valor),valor:its.reduce((s,d)=>s+d.valor,0),exec:its.reduce((s,d)=>s+d.valorExec,0),
+      qtd,um:ums.length===1?ums[0]:'',nEst,est:nEst>0,specs:specsDe(nome,its),fases,
+      progs:[...new Set(its.map(d=>d.programa))].sort(),tipo:its[0].tipo,anos:[Math.min(...its.map(d=>d.ano)),Math.max(...its.map(d=>d.ano))]};
+  }).sort((a,b)=>(b.est-a.est)||(b.valor-a.valor));
+}
 function pfRows(){
   const q=nrm((document.getElementById('pfSearch')||{}).value||'');
-  const ORD={Estratégico:0,Institucional:1,Local:2};
-  return pfData.filter(d=>!q||nrm([d.codigo,d.programa,d.ta,d.objeto,d.descricao,d.municipios,d.sgpeProjeto,d.sgpeExec,d.tipo,d.abrang,d.fase].join(' ')).includes(q))
-    .sort((a,b)=>(isAtivo(a)?0:1)-(isAtivo(b)?0:1)||ORD[a.abrang]-ORD[b.abrang]||String(a.programa).localeCompare(b.programa)||b.ano-a.ano||String(a.codigo).localeCompare(b.codigo));
+  return pfData.filter(isAtivo).filter(d=>!q||nrm([d.codigo,d.programa,d.objeto,d.descricao,d.municipios,d.sgpeProjeto,d.sgpeExec,d.tipo,d.abrang,d.fase,familiaDe(d)].join(' ')).includes(q));
 }
+function plural(um,q){if(q<=1)return um;return um.split(' ').map(w=>/[aeiouáéó]$/i.test(w)&&!/^(PM|de|da|do)$/i.test(w)?w+'s':w).join(' ');}
+function fmtQtd(f){if(!f.qtd||!f.um)return'';const v=f.qtd>=1e6?(f.qtd/1e6).toFixed(2).replace('.',',')+' mi':fmtNum(f.qtd);return`${v} ${esc(plural(f.um,f.qtd).toLowerCase())}`;}
 function renderPortfolioTable(){
-  const rows=pfRows();
-  const prov=allData.filter(d=>d.codigoProv).length,regra=allData.filter(d=>d.abrangOrigem==='regra').length,acl=allData.filter(d=>d.tipo==='A classificar').length;
+  const rows=pfRows();const fams=buildFamilias(rows);
   const q=(document.getElementById('pfSearch')||{}).value||'';
-  let note=`<b>${rows.length}</b> registro(s) exibido(s) de ${allData.length}.`;
+  const prov=allData.filter(d=>d.codigoProv).length,regra=allData.filter(d=>d.abrangOrigem==='regra').length;
+  let note=`<b>${fams.length}</b> família(s) de objeto · <b>${rows.length}</b> projeto(s) ativo(s) · R$ ${fmtM(rows.reduce((s,d)=>s+d.valor,0))}. Cancelados e apensados não entram nos cards.`;
   if(q)note+=rows.length?` Resultado para “${esc(q)}”.`:` <b>Nada encontrado para “${esc(q)}” — o objeto não consta do portfólio FESP.</b>`;
-  const pend=[];
-  if(prov)pend.push(`${prov} sem <i>Código do Projeto</i> na planilha (código provisório *)`);
-  if(regra)pend.push(`${regra} com abrangência pela regra padrão (·)`);
-  if(acl)pend.push(`${acl} com tipo a classificar`);
+  const pend=[];if(prov)pend.push(`${prov} sem <i>Código do Projeto</i> (código provisório *)`);if(regra)pend.push(`${regra} com abrangência pela regra padrão`);
   if(pend.length)note+=' Pendências de cadastro: '+pend.join('; ')+'.';
   document.getElementById('pfNote').innerHTML=note;
-  document.getElementById('tablePortfolio').innerHTML=rows.length?rows.map(d=>`<tr style="${isAtivo(d)?'':'opacity:0.55'}">
-    <td><span class="pf-code">${esc(d.codigo)}${d.codigoProv?'<span class="pf-prov">*</span>':''}</span></td>
-    <td style="color:${PROG_COLORS[d.programa]||'#c9a84c'};font-weight:600">${esc(d.programa)}</td>
-    <td>${esc(d.ta)||'–'}</td>
-    <td class="pf-obj" title="${esc(d.descricao)}"><b>${esc(d.objeto)||'–'}</b>${d.qtdPlano?` <span style="color:#8a96ab">· ${fmtNum(d.qtdPlano)} ${esc(d.um)}</span>`:''}${d.municipios?`<div style="font-size:10px;color:#8a96ab">${esc(trunc(d.municipios,80))}</div>`:''}</td>
-    <td style="font-size:11px">${esc(d.tipo)}</td>
-    <td style="font-size:11px">${esc(d.porte)}</td>
-    <td>${abrangBadge(d)}</td>
-    <td>${faseBadge(d.fase)}</td>
-    <td style="font-size:10px;color:#8a96ab;white-space:normal;min-width:150px">${esc(d.marco)||'–'}</td>
-    <td>${fmtBRL(d.valor)}</td><td>${d.valorProjeto?fmtBRL(d.valorProjeto):'–'}</td><td>${d.valorExec?fmtBRL(d.valorExec):'–'}</td>
-    <td>${sgpeCell(d)!=='–'?sgpeCell(d):(d.sgpeProjeto?`<span style="font-size:11px">${esc(d.sgpeProjeto)}</span>`:'–')}</td></tr>`).join(''):`<tr><td colspan="13" class="pf-empty">Nenhum projeto encontrado.</td></tr>`;
+  const el=document.getElementById('pfCards');
+  if(!fams.length){el.innerHTML='<div class="pf-empty">Nenhum projeto encontrado.</div>';return;}
+  el.innerHTML=fams.map(f=>{
+    const n=f.itens.length;
+    const ab=f.est?(f.nEst===n?'<span class="badge badge-estrategico">⭐ Estratégico</span>':`<span class="badge badge-estrategico">⭐ Estratégico · ${f.nEst} de ${n}</span>`):'<span class="badge badge-institucional">Institucional</span>';
+    const pct=f.valor?Math.round(f.exec/f.valor*100):0;
+    const fasesHtml=FASES_IG.filter(x=>f.fases[x]).map(x=>`<span class="fam-fase"><i style="background:${FASE_IG_COLORS[x]}"></i>${f.fases[x]} ${x.toLowerCase()}</span>`).join('');
+    const det=f.itens.map(d=>`<tr><td><span class="pf-code">${esc(d.codigo)}${d.codigoProv?'<span class="pf-prov">*</span>':''}</span></td><td style="color:${PROG_COLORS[d.programa]||'#c9a84c'};font-weight:600">${d.programa}</td><td>${d.ano}</td><td class="pf-obj">${esc(d.descricao||d.objeto)}${d.municipios?`<div style="font-size:10px;color:#8a96ab">${esc(trunc(d.municipios,80))}</div>`:''}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):'–'}</td><td>${faseBadge(d.fase)}<div style="font-size:10px;color:#8a96ab;margin-top:2px">${esc(d.marco)||''}</div></td><td>${fmtBRL(d.valor)}</td><td>${sgpeCell(d)!=='–'?sgpeCell(d):(d.sgpeProjeto?esc(d.sgpeProjeto):'–')}</td></tr>`).join('');
+    return`<div class="fam-card${f.est?' fam-est':''}">
+      <div class="fam-head"><div class="fam-name"><span class="fam-icon">${FAM_ICON[f.nome]||'📦'}</span>${esc(f.nome)}</div>${ab}</div>
+      <div class="fam-val">R$ ${fmtM(f.valor)}</div>
+      <div class="fam-meta">${n} projeto${n>1?'s':''}${fmtQtd(f)?' · '+fmtQtd(f):''} · ${f.progs.join(', ')} · ${f.anos[0]===f.anos[1]?f.anos[0]:f.anos[0]+'–'+f.anos[1]}</div>
+      ${f.specs.length?`<div class="fam-specs">${f.specs.map(s=>`<span>${esc(s)}</span>`).join('')}</div>`:''}
+      <div class="fam-exec"><div class="prog-exec"><div class="prog-exec-fill ${pct>=100?'':pct<30?'danger':pct<70?'warn':''}" style="width:${Math.min(pct,100)}%"></div></div><span>${f.exec?'Executado R$ '+fmtM(f.exec)+' · '+pct+'%':'Sem execução financeira registrada'}</span></div>
+      <div class="fam-fases">${fasesHtml}</div>
+      <details class="fam-det"><summary>Ver projetos (${n})</summary><div class="table-wrap" style="max-height:340px"><table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Fase IG</th><th>Valor plano</th><th>SGP-e</th></tr></thead><tbody>${det}</tbody></table></div></details>
+    </div>`;}).join('');
 }
 
 function renderPipeline(){
@@ -1016,16 +1089,16 @@ function renderPipeline(){
 }
 
 function printPortfolio(){
-  const rows=pfRows();
+  const rows=pfRows();const fams=buildFamilias(rows);
   const filtros=[['filterPrograma','Programa'],['filterAno','Ano'],['filterAplicacao','Aplicação'],['filterStatus','Fase'],['filterAbrang','Abrangência'],['filterTipo','Tipo'],['filterPorte','Porte'],['pfSearch','Busca']].map(([id,l])=>{const e=document.getElementById(id);return e&&e.value?`${l}: ${e.value}`:null;}).filter(Boolean);
-  const at=rows.filter(isAtivo);
   let el=document.getElementById('pfPrint');if(!el){el=document.createElement('div');el.id='pfPrint';document.body.appendChild(el);}
   el.innerHTML=`<h1>Polícia Militar de Santa Catarina — Portfólio de Projetos (IG 10-801, art. 21, §5º)</h1>
-  <div class="pp-sub">EMG / Escritório de Projetos da Polícia Militar · Fonte: Planilha FESP Fundo a Fundo · Emitido em ${new Date().toLocaleString('pt-BR')} · ${filtros.length?'Filtros: '+esc(filtros.join(' · ')):'Sem filtros'} · ${rows.length} registro(s), ${at.length} ativo(s) · Valor do plano (ativos): ${fmtBRL(at.reduce((s,d)=>s+d.valor,0))}</div>
-  <table><thead><tr><th>Código</th><th>Prog.</th><th>TA</th><th>Objeto</th><th>Qtd</th><th>Tipo</th><th>Porte</th><th>Abrangência</th><th>Fase IG</th><th>Último marco</th><th>Valor plano</th><th>Valor exec.</th><th>SGP-e</th></tr></thead><tbody>
-  ${rows.map(d=>`<tr><td>${esc(d.codigo)}${d.codigoProv?'*':''}</td><td>${esc(d.programa)}</td><td>${esc(d.ta)}</td><td>${esc(d.objeto)}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):''}</td><td>${esc(d.tipo)}</td><td>${esc(d.porte)}</td><td>${esc(d.abrang)}</td><td>${esc(d.fase)}</td><td>${esc(d.marco)}</td><td>${fmtBRL(d.valor)}</td><td>${d.valorExec?fmtBRL(d.valorExec):'–'}</td><td>${esc(d.sgpeExec||d.sgpeProjeto)}</td></tr>`).join('')}
+  <div class="pp-sub">EMG / Escritório de Projetos da Polícia Militar · Fonte: Planilha FESP Fundo a Fundo · Emitido em ${new Date().toLocaleString('pt-BR')} · ${filtros.length?'Filtros: '+esc(filtros.join(' · ')):'Sem filtros'} · ${fams.length} família(s), ${rows.length} projeto(s) ativo(s) · Valor do plano: ${fmtBRL(rows.reduce((s,d)=>s+d.valor,0))}</div>
+  <table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Abrangência</th><th>Fase IG</th><th>Último marco</th><th>Valor plano</th><th>Valor exec.</th><th>SGP-e</th></tr></thead><tbody>
+  ${fams.map(f=>`<tr class="pp-fam"><td colspan="11"><b>${esc(f.nome)}</b> — ${f.est?'Estratégico'+(f.nEst<f.itens.length?` (${f.nEst} de ${f.itens.length})`:''):'Institucional'} · ${f.itens.length} projeto(s) · ${fmtBRL(f.valor)}${fmtQtd(f)?' · '+fmtQtd(f):''}${f.specs.length?' · '+esc(f.specs.join(', ')):''}</td></tr>`+
+    f.itens.map(d=>`<tr><td>${esc(d.codigo)}${d.codigoProv?'*':''}</td><td>${esc(d.programa)}</td><td>${d.ano}</td><td>${esc(d.descricao||d.objeto)}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):''}</td><td>${esc(d.abrang)}</td><td>${esc(d.fase)}</td><td>${esc(d.marco)}</td><td>${fmtBRL(d.valor)}</td><td>${d.valorExec?fmtBRL(d.valorExec):'–'}</td><td>${esc(d.sgpeExec||d.sgpeProjeto)}</td></tr>`).join('')).join('')}
   </tbody></table>
-  <div class="pp-foot">* Código provisório (sem "Código do Projeto" na planilha). Abrangência conforme art. 3º, III a V; fase conforme art. 8º; porte: pequeno até R$ 500 mil, médio até R$ 3 mi, grande acima de R$ 3 mi. A presença no portfólio confere conhecimento e autorização prévia, não substituindo a aprovação do projeto.</div>`;
+  <div class="pp-foot">* Código provisório (sem "Código do Projeto" na planilha). Cancelados e apensados não constam. Abrangência conforme art. 3º, III a V; fase conforme art. 8º. A presença no portfólio confere conhecimento e autorização prévia, não substituindo a aprovação do projeto.</div>`;
   document.body.classList.add('print-pf');
   const done=()=>{document.body.classList.remove('print-pf');window.removeEventListener('afterprint',done);};
   window.addEventListener('afterprint',done);
