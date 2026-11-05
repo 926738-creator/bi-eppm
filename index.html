@@ -982,7 +982,7 @@ function renderKPIs(){
   const kpis=[
     {label:'Projetos no Portfólio',value:ativos.length,sub:'excl. cancelados e apensados',icon:'📋',accent:'#c9a84c'},
     {label:'Estratégicos',value:est.length,sub:'R$ '+fmtM(estVal)+' · '+(totalVal?Math.round(estVal/totalVal*100):0)+'% do valor',icon:'⭐',accent:'#e8c96a'},
-    {label:'Valor do Portfólio',value:'R$ '+fmtM(totalVal),sub:'plano de aplicação',icon:'💰',accent:'#3dbb77'},
+    {label:'Valor do Portfólio',value:'R$ '+fmtM(totalVal),sub:'itens do plano em projetos ativos',icon:'💰',accent:'#3dbb77'},
     {label:'Valor Executado',value:totalExec>0?'R$ '+fmtM(totalExec):'–',sub:(totalVal?Math.round(totalExec/totalVal*100):0)+'% do plano',icon:'✔',accent:'#3dbb77'},
     {label:'Iniciação / Planej.',value:cnt('Iniciação')+cnt('Planejamento'),sub:`${cnt('Iniciação')} iniciação · ${cnt('Planejamento')} planejamento`,icon:'⏳',accent:'#f0a840'},
     {label:'Em Execução',value:cnt('Execução'),sub:'adesão, licitação, contrato, entrega',icon:'⚡',accent:'#4b9fe8'},
@@ -997,7 +997,7 @@ function renderProgCards(){
   const at=pfData.filter(isAtivo);
   at.forEach(d=>{if(!d.programa)return;counts[d.programa]=(counts[d.programa]||0)+1;values[d.programa]=(values[d.programa]||0)+d.valor;});
   const total=at.length||1;
-  document.getElementById('progCards').innerHTML=Object.keys(counts).sort().map(p=>`<div class="prog-card"><div class="prog-card-header"><div class="prog-name" style="color:${PROG_COLORS[p]||'#c9a84c'}">${p}</div><div class="prog-count" style="color:${PROG_COLORS[p]||'#c9a84c'}">${counts[p]}</div></div><div class="prog-total">R$ ${fmtM(values[p])}</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${Math.round(counts[p]/total*100)}%;background:${PROG_COLORS[p]||'#c9a84c'}"></div></div></div>`).join('');
+  document.getElementById('progCards').innerHTML=Object.keys(counts).sort().map(p=>`<div class="prog-card"><div class="prog-card-header"><div class="prog-name" style="color:${PROG_COLORS[p]||'#c9a84c'}">${p}</div><div class="prog-count" style="color:${PROG_COLORS[p]||'#c9a84c'}">${counts[p]}</div></div><div class="prog-total">R$ ${fmtM(values[p])}</div><div style="font-size:10px;color:#8a96ab;margin-top:2px">${(()=>{const fa=(document.getElementById('filterAno')||{}).value,ft=(document.getElementById('filterTA')||{}).value;const v=planoOficialSoma({prog:p,ano:fa,ta:ft});return v===null?'':'Plano oficial PM: R$ '+fmtM(v);})()}</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${Math.round(counts[p]/total*100)}%;background:${PROG_COLORS[p]||'#c9a84c'}"></div></div></div>`).join('');
 }
 
 function hBar(id,labels,data,colors,fmt){
@@ -1237,6 +1237,14 @@ const PLANOS_FESP={
 };
 const PLANO_STATUS={ok:'Conferido',parcial:'Parcial',sem_valor:'Sem valores',sem_rateio:'Sem rateio'};
 function planoOficial(prog,ano){const p=(PLANOS_FESP[prog]||{})[ano];if(!p)return null;return{...p,total:(p.inv===null&&p.cus===null)?null:(p.inv||0)+(p.cus||0)};}
+function planoOficialSoma(f){ // f: {prog, ano, ta} — soma a parcela PM dos planos que casam com o filtro
+  let t=0,n=0;
+  Object.keys(PLANOS_FESP).forEach(prog=>{if(f.prog&&prog!==f.prog)return;
+    Object.keys(PLANOS_FESP[prog]).forEach(ano=>{const p=planoOficial(prog,+ano);
+      if(f.ano&&String(ano)!==String(f.ano))return;if(f.ta&&p.ta!==f.ta)return;
+      if(p.total!==null){t+=p.total;n++;}});});
+  return n?t:null;
+}
 function renderPlanosQuadro(base,fAno,fProg,fTA){
   const el=document.getElementById('planosQuadro');if(!el)return;
   const rows=[];
@@ -1290,7 +1298,10 @@ function renderExecFinanceira(){
   const fAno=fv('finAno'),fProg=fv('finProg'),fTA=fv('finTA'),fObj=fv('finObj');
   const data=rawData.filter(d=>d.statusMarco!=='Cancelado'&&(!fAno||String(d.ano)===fAno)&&(!fProg||d.programa===fProg)&&(!fTA||d.ta===fTA)&&(!fObj||d.objeto===fObj));
   renderPlanosQuadro(rawData,fAno,fProg,fTA);
-  const totPlano=data.reduce((s,d)=>s+d.valor,0);
+  const usaOficial=!fObj; // com filtro de Objeto, o plano é o do item (planilha)
+  const planoDe=(prog,ano)=>{if(usaOficial){const v=planoOficialSoma({prog:prog||fProg,ano:ano||fAno,ta:fTA});if(v!==null)return v;}
+    return data.filter(d=>(!prog||d.programa===prog)&&(!ano||String(d.ano)===String(ano))).reduce((s,d)=>s+d.valor,0);};
+  const totPlano=planoDe();
   const totProj=data.reduce((s,d)=>s+d.valorProjeto,0);
   const totExec=data.reduce((s,d)=>s+d.valorExec,0);
   const pctExec=totProj>0?((totExec/totProj)*100).toFixed(1):null;
@@ -1302,20 +1313,20 @@ function renderExecFinanceira(){
   const ecoL=fi.filter(x=>x.f.eco!==null);const totEco=ecoL.reduce((s,x)=>s+x.f.eco,0);const baseEco=ecoL.reduce((s,x)=>s+x.d.valorProjeto,0);
   const totSaldo=fi.reduce((s,x)=>s+(x.f.saldo||0),0);
   document.getElementById('execSummary').innerHTML=[
-    {label:'Valor Total Plano',val:'R$ '+fmtM(totPlano),sub:'plano de aplicação SENASP',ac:'#c9a84c'},
+    {label:'Valor Total Plano',val:'R$ '+fmtM(totPlano),sub:usaOficial?'planos de aplicação — parcela PM (oficial)':'soma dos itens do objeto filtrado',ac:'#c9a84c'},
     {label:'Valor Total Projeto',val:totProj>0?'R$ '+fmtM(totProj):'–',sub:'conforme PGP / projeto',ac:'#4b9fe8'},
     {label:'Valor Contratado',val:totContr>0?'R$ '+fmtM(totContr):'–',sub:comContr.length?comContr.length+' projeto(s) com contrato informado':'coluna “Valor Contratado” sem dados',ac:'#c46be8'},
     {label:'Valor Executado',val:totExec>0?'R$ '+fmtM(totExec):'–',sub:totContr>0?(execContr/totContr*100).toFixed(1)+'% do contratado':(pctExec?pctExec+'% do valor do projeto':'–'),ac:'#3dbb77'},
     {label:'Liquidação dos contratos',val:comContr.length?nQuit+' / '+comContr.length+' quitados':'–',sub:comContr.length?`${nParc} parcial · ${nSem} sem pagamento${nAcima?' · <span style="color:#e05252">'+nAcima+' acima do contratado</span>':''}`:'executado ÷ contratado',ac:'#3dbb77'},
     {label:'Economia aferida',val:ecoL.length?'R$ '+fmtM(totEco):'–',sub:ecoL.length?`${ecoL.length} licitação(ões) quitada(s) · ${(totEco/baseEco*100).toFixed(1)}% do projeto`:'só licitações com executado = contratado',ac:'#e8c96a'},
-    {label:'Saldo das Ações',val:'R$ '+fmtM(totSaldo),sub:'plano − executado (projeto, se plano zerado)',ac:'#e87a4b'},
+    {label:'Saldo das Ações',val:'R$ '+fmtM(usaOficial?totPlano-totExec:totSaldo),sub:usaOficial?'plano oficial − executado':'plano − executado (projeto, se plano zerado)',ac:'#e87a4b'},
   ].map(c=>'<div class="exec-card"><div class="exec-card-label">'+c.label+'</div><div class="exec-card-val" style="color:'+c.ac+'">'+c.val+'</div><div class="exec-card-sub">'+c.sub+'</div></div>').join('');
   const progs=[...new Set(data.map(d=>d.programa).filter(Boolean))].sort();
   const anos=[...new Set(data.map(d=>d.ano).filter(Boolean))].sort();
   destroyChart('chartExecProg');
-  charts['chartExecProg']=new Chart(document.getElementById('chartExecProg').getContext('2d'),{type:'bar',data:{labels:progs,datasets:[{label:'Plano',data:progs.map(p=>data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valor,0)),backgroundColor:'rgba(201,168,76,0.5)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Projeto',data:progs.map(p=>data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valorProjeto,0)),backgroundColor:'rgba(75,159,232,0.5)',borderColor:'#4b9fe8',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Executado',data:progs.map(p=>data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valorExec,0)),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return 'R$ '+fmtM(v);}}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': R$ '+fmtM(ctx.parsed.y);}}}}}});
+  charts['chartExecProg']=new Chart(document.getElementById('chartExecProg').getContext('2d'),{type:'bar',data:{labels:progs,datasets:[{label:'Plano',data:progs.map(p=>planoDe(p,null)),backgroundColor:'rgba(201,168,76,0.5)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Projeto',data:progs.map(p=>data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valorProjeto,0)),backgroundColor:'rgba(75,159,232,0.5)',borderColor:'#4b9fe8',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Executado',data:progs.map(p=>data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valorExec,0)),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return 'R$ '+fmtM(v);}}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': R$ '+fmtM(ctx.parsed.y);}}}}}});
   destroyChart('chartExecAno');
-  charts['chartExecAno']=new Chart(document.getElementById('chartExecAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:[{label:'Plano',data:anos.map(a=>data.filter(d=>d.ano===a).reduce((s,d)=>s+d.valor,0)),backgroundColor:'rgba(201,168,76,0.5)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Executado',data:anos.map(a=>data.filter(d=>d.ano===a).reduce((s,d)=>s+d.valorExec,0)),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return 'R$ '+fmtM(v);}}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': R$ '+fmtM(ctx.parsed.y);}}}}}});
+  charts['chartExecAno']=new Chart(document.getElementById('chartExecAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:[{label:'Plano',data:anos.map(a=>planoDe(null,a)),backgroundColor:'rgba(201,168,76,0.5)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Executado',data:anos.map(a=>data.filter(d=>d.ano===a).reduce((s,d)=>s+d.valorExec,0)),backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return 'R$ '+fmtM(v);}}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': R$ '+fmtM(ctx.parsed.y);}}}}}});
   destroyChart('chartModalidade');
   const mods={};data.forEach(d=>{if(d.modalidade)mods[d.modalidade]=(mods[d.modalidade]||0)+1;});
   const mL=Object.keys(mods).sort();
