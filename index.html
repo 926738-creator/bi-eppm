@@ -315,8 +315,10 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
       <div class="prog-cards" id="progCards"></div>
       <div class="filter-bar">
         <span class="filter-label">Filtrar:</span>
-        <select id="filterPrograma" onchange="applyFilters()"><option value="">Todos os programas</option></select>
         <select id="filterAno" onchange="applyFilters()"><option value="">Todos os anos</option></select>
+        <select id="filterPrograma" onchange="applyFilters()"><option value="">Todos os programas</option></select>
+        <select id="filterTA" onchange="applyFilters()"><option value="">Todos os TAs</option></select>
+        <select id="filterObjeto" onchange="applyFilters()" style="min-width:170px"><option value="">Todos os objetos</option></select>
         <select id="filterAplicacao" onchange="applyFilters()"><option value="">Custeio / Investimento</option><option value="Custeio">Custeio</option><option value="Investimento">Investimento</option></select>
         <select id="filterStatus" onchange="applyFilters()"><option value="">Todas as fases</option></select>
         <select id="filterAbrang" onchange="applyFilters()"><option value="">Toda abrangência</option></select>
@@ -812,6 +814,8 @@ function populateFilters(){
   const mods=[...new Set(rawData.map(d=>d.modalidade).filter(Boolean))].sort();
   fillSel('filterPrograma',progs,'Todos os programas');
   fillSel('filterAno',anos,'Todos os anos');
+  fillSel('filterTA',[...new Set(allData.map(d=>d.ta).filter(Boolean))].sort((a,b)=>{const y=t=>+(String(t).match(/(\d{4})/)||[0,0])[1];const n=t=>+(String(t).match(/(\d+)\//)||[0,0])[1];return y(b)-y(a)||n(a)-n(b);}),'Todos os TAs');
+  fillSel('filterObjeto',[...new Set(allData.filter(isAtivo).map(d=>familiaDe(d)))].sort((a,b)=>a.localeCompare(b,'pt-BR')),'Todos os objetos');
   fillSel('filterStatus',FASES_IG,'Todas as fases');
   fillSel('filterAbrang',['Estratégico','Institucional','Local'].filter(a=>allData.some(d=>d.abrang===a)),'Toda abrangência');
   fillSel('filterTipo',TIPOS_IG.filter(t=>allData.some(d=>d.tipo===t)),'Todos os tipos');
@@ -830,13 +834,13 @@ function fillSel(id,vals,ph){
 }
 function applyFilters(){
   const v=id=>{const e=document.getElementById(id);return e?e.value:'';};
-  const prog=v('filterPrograma'),ano=v('filterAno'),apl=v('filterAplicacao'),fase=v('filterStatus'),ab=v('filterAbrang'),tp=v('filterTipo'),pt=v('filterPorte');
-  const m=d=>(!prog||d.programa===prog)&&(!ano||String(d.ano)===String(ano))&&(!apl||d.aplicacao===apl)&&(!fase||d.fase===fase)&&(!ab||d.abrang===ab)&&(!tp||d.tipo===tp)&&(!pt||d.porte===pt);
+  const prog=v('filterPrograma'),ano=v('filterAno'),ta=v('filterTA'),ob=v('filterObjeto'),apl=v('filterAplicacao'),fase=v('filterStatus'),ab=v('filterAbrang'),tp=v('filterTipo'),pt=v('filterPorte');
+  const m=d=>(!prog||d.programa===prog)&&(!ano||String(d.ano)===String(ano))&&(!ta||d.ta===ta)&&(!ob||familiaDe(d)===ob)&&(!apl||d.aplicacao===apl)&&(!fase||d.fase===fase)&&(!ab||d.abrang===ab)&&(!tp||d.tipo===tp)&&(!pt||d.porte===pt);
   filteredData=rawData.filter(m);pfData=allData.filter(m);
   renderAll();
 }
 function clearPfFilters(){
-  ['filterPrograma','filterAno','filterAplicacao','filterStatus','filterAbrang','filterTipo','filterPorte','pfSearch'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['filterPrograma','filterAno','filterTA','filterObjeto','filterAplicacao','filterStatus','filterAbrang','filterTipo','filterPorte','pfSearch'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   applyFilters();
 }
 
@@ -1107,7 +1111,7 @@ function renderPipeline(){
 
 function printPortfolio(){
   const rows=pfRows();const fams=buildFamilias(rows);
-  const filtros=[['filterPrograma','Programa'],['filterAno','Ano'],['filterAplicacao','Aplicação'],['filterStatus','Fase'],['filterAbrang','Abrangência'],['filterTipo','Tipo'],['filterPorte','Porte'],['pfSearch','Busca']].map(([id,l])=>{const e=document.getElementById(id);return e&&e.value?`${l}: ${e.value}`:null;}).filter(Boolean);
+  const filtros=[['filterAno','Ano'],['filterPrograma','Programa'],['filterTA','TA'],['filterObjeto','Objeto'],['filterAplicacao','Aplicação'],['filterStatus','Fase'],['filterAbrang','Abrangência'],['filterTipo','Tipo'],['filterPorte','Porte'],['pfSearch','Busca']].map(([id,l])=>{const e=document.getElementById(id);return e&&e.value?`${l}: ${e.value}`:null;}).filter(Boolean);
   let el=document.getElementById('pfPrint');if(!el){el=document.createElement('div');el.id='pfPrint';document.body.appendChild(el);}
   el.innerHTML=`<div class="pp-logos"><img src="assets/logo-pmsc.png" alt="PMSC"><img src="assets/logo-eppm.png" alt="EPPM"></div><h1>Polícia Militar de Santa Catarina — Portfólio de Projetos (IG 10-801, art. 21, §5º)</h1>
   <div class="pp-sub">EMG / Escritório de Projetos da Polícia Militar · Fonte: Planilha FESP Fundo a Fundo · Emitido em ${new Date().toLocaleString('pt-BR')} · ${filtros.length?'Filtros: '+esc(filtros.join(' · ')):'Sem filtros'} · ${fams.length} família(s), ${rows.length} projeto(s) ativo(s) · Valor do plano: ${fmtBRL(rows.reduce((s,d)=>s+d.valor,0))}</div>
