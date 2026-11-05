@@ -410,6 +410,11 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
         <button class="pf-btn" onclick="['finAno','finProg','finTA','finObj'].forEach(id=>document.getElementById(id).value='');renderExecFinanceira()">Limpar</button>
       </div>
       <div class="exec-summary" id="execSummary"></div>
+      <div class="chart-card col-12" style="margin-bottom:14px">
+        <div class="chart-title">Planos de Aplicação × Execução — parcela da PM</div>
+        <div class="pf-note" style="margin:0 0 8px">Plano oficial = soma dos itens da Polícia Militar no Plano de Aplicação (valores fixos no código, objeto <code>PLANOS_FESP</code>). Alocado = soma do “Valor (R$)” da planilha (exceto cancelados/apensados). Não alocado = oficial − alocado. Saldo = oficial − executado. Passe o mouse no status para ver a observação.</div>
+        <div class="table-wrap" style="max-height:420px"><table><thead><tr><th>Ano</th><th>Prog</th><th>TA</th><th>Plano oficial (PM)</th><th>Alocado na planilha</th><th>Não alocado</th><th>Executado</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="planosQuadro"></tbody></table></div>
+      </div>
       <div class="charts-grid">
         <div class="chart-card col-6"><div class="chart-title">Valor por Programa (R$)</div><div class="chart-wrap" style="height:200px"><canvas id="chartExecProg"></canvas></div></div>
         <div class="chart-card col-6"><div class="chart-title">Valor por Ano (R$)</div><div class="chart-wrap" style="height:200px"><canvas id="chartExecAno"></canvas></div></div>
@@ -1195,6 +1200,70 @@ function renderEntregas(){
 // ══════════════════════════════════════════════════════════════
 // ABA 3 — EXECUÇÃO FINANCEIRA
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// PLANOS DE APLICAÇÃO FESP — PARCELA DA POLÍCIA MILITAR (valores fixos)
+// Fonte: Planos de Aplicação/Ação (pasta Drive EPPM), somando apenas os itens
+// cuja Instituição é a Polícia Militar. Atualizar aqui quando houver aditivo.
+// status: 'ok' = conferido no plano | 'parcial' = total conferido, divisão inv/custeio a confirmar
+//         'sem_valor' = documento sem valores (plano de ação) | 'sem_rateio' = recurso ficou com a SSP
+// ══════════════════════════════════════════════════════════════
+const PLANOS_FESP={
+  RMV:{
+    2019:{ta:'TA 14/2019',inv:null,cus:null,status:'sem_valor',obs:'Plano de Ação (2º aditivo) sem valores; PDF da pasta está rotulado como TA 015/2019'},
+    2020:{ta:'TA 48/2020',inv:6920935.99,cus:1400000.00,status:'parcial',obs:'Meta 1 PM = R$ 8.320.935,99 (viaturas 5.818.879,07; fardamento/capas de colete 2.502.056,92). Natureza das capas (1.102.056,92) a confirmar'},
+    2021:{ta:'TA 48/2021',inv:10078893.16,cus:4319525.63,status:'ok',obs:'Viaturas semi-blindadas, bloqueador de sinais, livros APMT, fardamento, armamento de treinamento, blindado lançador de água'},
+    2022:{ta:'TA 48/2022',inv:12428151.49,cus:5326350.65,status:'ok',obs:'Viaturas semi-blindadas, fardamento/colete modular, pós-graduação'},
+    2023:{ta:'TA 24/2023',inv:5114974.34,cus:3272131.86,status:'ok',obs:'TASER-10 e munições'},
+    2024:{ta:'TA 70/2024',inv:9216056.21,cus:3949738.37,status:'ok',obs:'Radiocomunicação, mobiliário, ar-condicionado, computadores, televisores, viatura, TASER, munições'},
+    2025:{ta:'TA 70/2025',inv:0,cus:0,status:'sem_rateio',obs:'Recurso ficou com a SSP — não houve rateio para a PM'},
+    2026:{ta:'TA 70/2026',inv:9327696.86,cus:3997584.37,status:'ok',obs:'Vans bases móveis, traje antibomba, coletes, fuzis, servidor IA, munições'},
+  },
+  MQV:{
+    2019:{ta:'TA 15/2019',inv:null,cus:null,status:'sem_valor',obs:'Plano de Ação (2º aditivo) sem valores'},
+    2020:{ta:'TA 47/2020',inv:null,cus:null,status:'sem_valor',obs:'Pasta tem o Plano Substitutivo (remanejamentos); valores originais da PM a conferir'},
+    2021:{ta:'TA 47/2021',inv:1799802.36,cus:1799802.33,status:'ok',obs:'Academias, psicoterapia, exames'},
+    2022:{ta:'TA 47/2022',inv:0,cus:2279472.01,status:'ok',obs:'Curso de educação financeira'},
+    2023:{ta:'TA 24/2023',inv:1009824.19,cus:1009824.20,status:'ok',obs:'Academias e psicoterapia'},
+    2024:{ta:'TA 72/2024',inv:1175735.22,cus:1175735.23,status:'ok',obs:'Academias (equip., ar-cond., mosquetões, piso), psicoterapia, exames preventivos, raio-x e digitalizador odontológicos'},
+    2025:{ta:'TA 72/2025',inv:1303360.05,cus:0,status:'ok',obs:'Academias (equipamentos e piso emborrachado)'},
+    2026:{ta:'TA 72/2026',inv:1222736.89,cus:0,status:'ok',obs:'Academias e piso emborrachado — custeio do MQV 2026 é de outras instituições'},
+  },
+  EVM:{
+    2023:{ta:'TA 24/2023',inv:618357.37,cus:265010.29,status:'ok',obs:'Software, coletes, notebooks, smartphones, seminário, material gráfico'},
+    2024:{ta:'TA 71/2024',inv:720004.40,cus:308573.30,status:'ok',obs:'Viaturas e seminário Rede Catarina'},
+    2025:{ta:'TA 71/2025',inv:800695.40,cus:343155.19,status:'ok',obs:'Ajuste 24/07/2026: projetores remanejados para viaturas; inclui suplementar'},
+    2026:{ta:'TA 71/2026',inv:728726.29,cus:312311.28,status:'ok',obs:'Viaturas, microcomputadores, material gráfico, seminário'},
+  },
+};
+const PLANO_STATUS={ok:'Conferido',parcial:'Parcial',sem_valor:'Sem valores',sem_rateio:'Sem rateio'};
+function planoOficial(prog,ano){const p=(PLANOS_FESP[prog]||{})[ano];if(!p)return null;return{...p,total:(p.inv===null&&p.cus===null)?null:(p.inv||0)+(p.cus||0)};}
+function renderPlanosQuadro(base,fAno,fProg,fTA){
+  const el=document.getElementById('planosQuadro');if(!el)return;
+  const rows=[];
+  Object.keys(PLANOS_FESP).sort().forEach(prog=>{
+    if(fProg&&prog!==fProg)return;
+    Object.keys(PLANOS_FESP[prog]).forEach(ano=>{
+      const p=planoOficial(prog,+ano);
+      if(fAno&&String(ano)!==fAno)return;
+      if(fTA&&p.ta!==fTA)return;
+      const its=base.filter(d=>d.programa===prog&&String(d.ano)===String(ano)&&d.statusMarco!=='Cancelado'&&d.statusMarco!=='Apensado');
+      const aloc=its.reduce((s,d)=>s+d.valor,0),exec=its.reduce((s,d)=>s+d.valorExec,0);
+      rows.push({prog,ano:+ano,p,aloc,exec,naoAloc:p.total===null?null:p.total-aloc,saldo:p.total===null?null:p.total-exec});
+    });
+  });
+  rows.sort((a,b)=>b.ano-a.ano||a.prog.localeCompare(b.prog));
+  const tot=k=>rows.reduce((s,r)=>s+(r[k]||0),0);
+  const totOf=rows.reduce((s,r)=>s+(r.p.total||0),0);
+  const c=v=>v===null?'<span style="color:#8a96ab">–</span>':`<span style="color:${v<-1?'#e05252':'#d8dde8'}">${fmtBRL(v)}</span>`;
+  const stCls={ok:'fin-ok',parcial:'fin-warn',sem_valor:'fin-pend',sem_rateio:'fin-pend'};
+  el.innerHTML=rows.map(r=>`<tr><td>${r.ano}</td><td class="prog-${r.prog.toLowerCase()}">${r.prog}</td><td style="font-size:10px;color:#8a96ab">${r.p.ta}</td>
+    <td style="white-space:nowrap" title="Investimento ${r.p.inv===null?'–':fmtBRL(r.p.inv)} · Custeio ${r.p.cus===null?'–':fmtBRL(r.p.cus)}">${r.p.total===null?'<span style="color:#8a96ab">–</span>':fmtBRL(r.p.total)}<div style="font-size:10px;color:#8a96ab">${r.p.inv===null?'':'Inv '+fmtM(r.p.inv)+' · Cus '+fmtM(r.p.cus)}</div></td>
+    <td style="white-space:nowrap">${fmtBRL(r.aloc)}</td><td style="white-space:nowrap">${c(r.naoAloc)}</td>
+    <td style="white-space:nowrap;color:#3dbb77">${r.exec?fmtBRL(r.exec):'–'}</td><td style="white-space:nowrap">${c(r.saldo)}</td>
+    <td><span class="fin-badge ${stCls[r.p.status]}" title="${esc(r.p.obs)}">${PLANO_STATUS[r.p.status]}</span></td></tr>`).join('')
+    +(rows.length?`<tr style="border-top:2px solid var(--gold)"><td colspan="3"><b>Total</b></td><td style="white-space:nowrap"><b>${fmtBRL(totOf)}</b></td><td style="white-space:nowrap"><b>${fmtBRL(tot('aloc'))}</b></td><td style="white-space:nowrap"><b>${fmtBRL(tot('naoAloc'))}</b></td><td style="white-space:nowrap;color:#3dbb77"><b>${fmtBRL(tot('exec'))}</b></td><td style="white-space:nowrap"><b>${fmtBRL(tot('saldo'))}</b></td><td></td></tr>`:'<tr><td colspan="9" style="text-align:center;color:#8a96ab;padding:14px">Sem planos para o filtro</td></tr>');
+}
+
 // ── Métricas financeiras: liquidação, economia e saldo da ação ──
 const TOL=1; // tolerância de R$ 1,00 para arredondamentos
 function isLicitacao(d){const m=String(d.modalidade||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return m.includes('licita')&&!m.includes('ata');}
@@ -1220,6 +1289,7 @@ function renderExecFinanceira(){
   const fv=id=>{const e=document.getElementById(id);return e?e.value:'';};
   const fAno=fv('finAno'),fProg=fv('finProg'),fTA=fv('finTA'),fObj=fv('finObj');
   const data=rawData.filter(d=>d.statusMarco!=='Cancelado'&&(!fAno||String(d.ano)===fAno)&&(!fProg||d.programa===fProg)&&(!fTA||d.ta===fTA)&&(!fObj||d.objeto===fObj));
+  renderPlanosQuadro(rawData,fAno,fProg,fTA);
   const totPlano=data.reduce((s,d)=>s+d.valor,0);
   const totProj=data.reduce((s,d)=>s+d.valorProjeto,0);
   const totExec=data.reduce((s,d)=>s+d.valorExec,0);
