@@ -130,7 +130,13 @@ tbody tr.clickable:hover{background:rgba(75,159,232,0.08)}
 .um-num{text-align:center}
 .um-num-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;line-height:1;word-break:break-all}
 .um-num-lbl{font-size:9px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
-.exec-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.exec-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.fin-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.fin-ok{background:rgba(61,187,119,0.18);color:#3dbb77;border:1px solid #3dbb7744}
+.fin-warn{background:rgba(240,168,64,0.2);color:#f0a840;border:1px solid #f0a84044}
+.fin-pend{background:rgba(138,150,171,0.18);color:#b8c1d1;border:1px solid #8a96ab44}
+.fin-err{background:rgba(224,82,82,0.18);color:#e05252;border:1px solid #e0525244}
+.fin-na{color:#8a96ab}
 .exec-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center}
 .exec-card-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
 .exec-card-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--white)}
@@ -404,8 +410,9 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
       </div>
       <div class="chart-card col-12">
         <div class="chart-title">Detalhamento Financeiro</div>
+        <div class="pf-note" style="margin:0 0 8px">Liquidação = executado ÷ contratado (deve chegar a 100%; abaixo indica pagamento parcelado ou falha de faturamento). Economia = projeto − executado, aferida só em licitações quitadas; em adesão/pedido em ata o preço já é conhecido. Saldo da Ação = plano − executado (usa o valor do projeto quando o plano está zerado).</div>
         <div class="table-wrap">
-          <table><thead><tr><th>Ano</th><th>Prog</th><th>TA</th><th>Objeto</th><th>Aplicação</th><th>Modalidade</th><th>Valor Plano</th><th>Valor Projeto</th><th>Valor Exec.</th><th>% Exec.</th></tr></thead><tbody id="tableExec"></tbody></table>
+          <table><thead><tr><th>Ano</th><th>Prog</th><th>TA</th><th>Objeto</th><th>Modalidade</th><th>Valor Plano</th><th>Valor Projeto</th><th>Valor Contratado</th><th>Valor Exec.</th><th title="Executado ÷ contratado — deve ser 100%">Liquidação</th><th title="Projeto − executado; só licitações quitadas">Economia</th><th title="Plano − executado (projeto, se plano zerado)">Saldo da Ação</th></tr></thead><tbody id="tableExec"></tbody></table>
         </div>
       </div>
     </div>
@@ -633,7 +640,7 @@ const COL_MAP={
   prazoEntrega:['prazo do entrega','prazo de entrega','prazo entrega'],
   objetoExec:['objeto executado'],
   modalidade:['modalidade de contratação','modalidade de contratacao','modalidade'],
-  qtdExecutada:['quantidade executada'],valorExec:['valor executado'],
+  qtdExecutada:['quantidade executada'],valorExec:['valor executado'],valorContratado:['valor contratado'],
   marco:['cronograma','marco'],
   ultimoReport:['último report (data)','ultimo report (data)'],
   statusReport:['status report'],
@@ -693,7 +700,7 @@ function processData(rows){
       prazoEntrega:parsePrazo(r[ci.prazoEntrega]),
       objetoExec:get(r,'objetoExec'),
       modalidade:get(r,'modalidade'),
-      qtdExecutada:parseNum(get(r,'qtdExecutada')),valorExec:parseBRL(get(r,'valorExec')),
+      qtdExecutada:parseNum(get(r,'qtdExecutada')),valorExec:parseBRL(get(r,'valorExec')),valorContratado:ci.valorContratado!==undefined?parseBRL(get(r,'valorContratado')):0,
       marco:marcoRaw,statusMarco,
       ultimoReport:get(r,'ultimoReport'),statusReport:get(r,'statusReport'),
       codigoPlan:ci.codigo!==undefined?get(r,'codigo'):'',
@@ -1170,13 +1177,49 @@ function renderEntregas(){
 // ══════════════════════════════════════════════════════════════
 // ABA 3 — EXECUÇÃO FINANCEIRA
 // ══════════════════════════════════════════════════════════════
+// ── Métricas financeiras: liquidação, economia e saldo da ação ──
+const TOL=1; // tolerância de R$ 1,00 para arredondamentos
+function isLicitacao(d){const m=String(d.modalidade||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return m.includes('licita')&&!m.includes('ata');}
+function finInfo(d){
+  const vc=d.valorContratado||0,ex=d.valorExec||0;
+  let liq,liqCls,liqTxt;
+  if(!vc){liq=null;liqCls='fin-na';liqTxt=ex?'Sem contratado':'–';}
+  else if(Math.abs(ex-vc)<=TOL){liq=100;liqCls='fin-ok';liqTxt='Quitado';}
+  else if(ex>vc){liq=ex/vc*100;liqCls='fin-err';liqTxt='Acima do contratado';}
+  else if(ex>0){liq=ex/vc*100;liqCls='fin-warn';liqTxt='Parcial';}
+  else{liq=0;liqCls='fin-pend';liqTxt='Sem pagamento';}
+  const quitado=liqTxt==='Quitado';
+  let eco=null,ecoTxt;
+  if(!isLicitacao(d))ecoTxt=d.modalidade?'n/a (ata)':'–';
+  else if(!quitado)ecoTxt='aguarda quitação';
+  else if(!d.valorProjeto)ecoTxt='sem valor do projeto';
+  else{eco=d.valorProjeto-ex;ecoTxt=null;}
+  const base=d.valor>0?d.valor:d.valorProjeto;
+  const saldo=base?base-ex:null;
+  return{liq,liqCls,liqTxt,quitado,eco,ecoTxt,saldo,saldoBase:d.valor>0?'plano':'projeto'};
+}
 function renderExecFinanceira(){
   const data=filteredData.filter(d=>d.statusMarco!=='Cancelado');
   const totPlano=data.reduce((s,d)=>s+d.valor,0);
   const totProj=data.reduce((s,d)=>s+d.valorProjeto,0);
   const totExec=data.reduce((s,d)=>s+d.valorExec,0);
   const pctExec=totProj>0?((totExec/totProj)*100).toFixed(1):null;
-  document.getElementById('execSummary').innerHTML=[{label:'Valor Total Plano',val:'R$ '+fmtM(totPlano),sub:'plano de aplicação SENASP',ac:'#c9a84c'},{label:'Valor Total Projeto',val:totProj>0?'R$ '+fmtM(totProj):'–',sub:'conforme PGP / projeto',ac:'#4b9fe8'},{label:'Valor Executado',val:totExec>0?'R$ '+fmtM(totExec):'–',sub:pctExec?pctExec+'% do valor do projeto':'–',ac:'#3dbb77'}].map(c=>'<div class="exec-card"><div class="exec-card-label">'+c.label+'</div><div class="exec-card-val" style="color:'+c.ac+'">'+c.val+'</div><div class="exec-card-sub">'+c.sub+'</div></div>').join('');
+  const totContr=data.reduce((s,d)=>s+(d.valorContratado||0),0);
+  const fi=data.map(d=>({d,f:finInfo(d)}));
+  const comContr=fi.filter(x=>x.d.valorContratado>0);
+  const execContr=comContr.reduce((s,x)=>s+x.d.valorExec,0);
+  const nQuit=comContr.filter(x=>x.f.quitado).length,nParc=comContr.filter(x=>x.f.liqTxt==='Parcial').length,nSem=comContr.filter(x=>x.f.liqTxt==='Sem pagamento').length,nAcima=comContr.filter(x=>x.f.liqTxt==='Acima do contratado').length;
+  const ecoL=fi.filter(x=>x.f.eco!==null);const totEco=ecoL.reduce((s,x)=>s+x.f.eco,0);const baseEco=ecoL.reduce((s,x)=>s+x.d.valorProjeto,0);
+  const totSaldo=fi.reduce((s,x)=>s+(x.f.saldo||0),0);
+  document.getElementById('execSummary').innerHTML=[
+    {label:'Valor Total Plano',val:'R$ '+fmtM(totPlano),sub:'plano de aplicação SENASP',ac:'#c9a84c'},
+    {label:'Valor Total Projeto',val:totProj>0?'R$ '+fmtM(totProj):'–',sub:'conforme PGP / projeto',ac:'#4b9fe8'},
+    {label:'Valor Contratado',val:totContr>0?'R$ '+fmtM(totContr):'–',sub:comContr.length?comContr.length+' projeto(s) com contrato informado':'coluna “Valor Contratado” sem dados',ac:'#c46be8'},
+    {label:'Valor Executado',val:totExec>0?'R$ '+fmtM(totExec):'–',sub:totContr>0?(execContr/totContr*100).toFixed(1)+'% do contratado':(pctExec?pctExec+'% do valor do projeto':'–'),ac:'#3dbb77'},
+    {label:'Liquidação dos contratos',val:comContr.length?nQuit+' / '+comContr.length+' quitados':'–',sub:comContr.length?`${nParc} parcial · ${nSem} sem pagamento${nAcima?' · <span style="color:#e05252">'+nAcima+' acima do contratado</span>':''}`:'executado ÷ contratado',ac:'#3dbb77'},
+    {label:'Economia aferida',val:ecoL.length?'R$ '+fmtM(totEco):'–',sub:ecoL.length?`${ecoL.length} licitação(ões) quitada(s) · ${(totEco/baseEco*100).toFixed(1)}% do projeto`:'só licitações com executado = contratado',ac:'#e8c96a'},
+    {label:'Saldo das Ações',val:'R$ '+fmtM(totSaldo),sub:'plano − executado (projeto, se plano zerado)',ac:'#e87a4b'},
+  ].map(c=>'<div class="exec-card"><div class="exec-card-label">'+c.label+'</div><div class="exec-card-val" style="color:'+c.ac+'">'+c.val+'</div><div class="exec-card-sub">'+c.sub+'</div></div>').join('');
   const progs=[...new Set(data.map(d=>d.programa).filter(Boolean))].sort();
   const anos=[...new Set(data.map(d=>d.ano).filter(Boolean))].sort();
   destroyChart('chartExecProg');
@@ -1191,7 +1234,12 @@ function renderExecFinanceira(){
   destroyChart('chartExecPct');
   const pctData=progs.map(p=>{const proj=data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valorProjeto,0);const exec=data.filter(d=>d.programa===p).reduce((s,d)=>s+d.valorExec,0);return proj>0?Math.round(exec/proj*100):0;});
   charts['chartExecPct']=new Chart(document.getElementById('chartExecPct').getContext('2d'),{type:'bar',data:{labels:progs,datasets:[{label:'% Executado',data:pctData,backgroundColor:progs.map(function(_,i){const v=pctData[i];return v>=100?'rgba(61,187,119,0.7)':v<30?'rgba(224,82,82,0.6)':'rgba(240,168,64,0.7)';}),borderRadius:4,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,scales:{x:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.06)'},min:0,max:100,ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return v+'%';}}}},plugins:{...CD.plugins,legend:{display:false},tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){return ctx.parsed.y+'% executado';}}}}}});
-  document.getElementById('tableExec').innerHTML=data.map(d=>{const pct=d.valorProjeto>0?((d.valorExec/d.valorProjeto)*100).toFixed(0):null;const pctColor=pct===null?'#8a96ab':pct>=100?'#3dbb77':pct<30?'#e05252':'#f0a840';return'<tr><td>'+(d.ano||'–')+'</td><td class="prog-'+(d.programa||'').toLowerCase()+'">'+(d.programa||'–')+'</td><td style="font-size:10px;color:#8a96ab">'+(d.ta||'–')+'</td><td title="'+d.objeto+'">'+trunc(d.objeto,40)+'</td><td>'+aplicacaoBadge(d.aplicacao)+'</td><td style="font-size:10px;color:#8a96ab">'+(d.modalidade||'–')+'</td><td style="white-space:nowrap">'+fmtBRL(d.valor)+'</td><td style="white-space:nowrap">'+(d.valorProjeto?fmtBRL(d.valorProjeto):'–')+'</td><td style="white-space:nowrap;color:#3dbb77">'+(d.valorExec?fmtBRL(d.valorExec):'–')+'</td><td style="color:'+pctColor+';font-family:Barlow Condensed,sans-serif;font-weight:700">'+(pct!==null?pct+'%':'–')+'</td></tr>';}).join('')||'<tr><td colspan="10" style="text-align:center;color:#8a96ab;padding:20px">Sem dados</td></tr>';
+  const nw='white-space:nowrap';
+  document.getElementById('tableExec').innerHTML=data.map(d=>{const f=finInfo(d);
+    const liq=f.liq===null?`<span class="fin-badge ${f.liqCls}">${f.liqTxt}</span>`:`<span class="fin-badge ${f.liqCls}" title="Executado ÷ contratado">${f.liqTxt} · ${f.liq.toFixed(0)}%</span>`;
+    const eco=f.eco!==null?`<span style="color:${f.eco>=0?'#3dbb77':'#e05252'};font-weight:600">${fmtBRL(f.eco)}</span><div style="font-size:10px;color:#8a96ab">${(f.eco/d.valorProjeto*100).toFixed(1)}% do projeto</div>`:`<span style="font-size:10px;color:#8a96ab">${f.ecoTxt}</span>`;
+    const sal=f.saldo===null?'–':`<span style="color:${f.saldo<0?'#e05252':'#d8dde8'}">${fmtBRL(f.saldo)}</span>${f.saldoBase==='projeto'?'<div style="font-size:10px;color:#8a96ab">base: projeto</div>':''}`;
+    return'<tr><td>'+(d.ano||'–')+'</td><td class="prog-'+(d.programa||'').toLowerCase()+'">'+(d.programa||'–')+'</td><td style="font-size:10px;color:#8a96ab">'+(d.ta||'–')+'</td><td title="'+d.objeto+'">'+trunc(d.objeto,40)+'</td><td style="font-size:10px;color:#8a96ab">'+(d.modalidade||'–')+'</td><td style="'+nw+'">'+fmtBRL(d.valor)+'</td><td style="'+nw+'">'+(d.valorProjeto?fmtBRL(d.valorProjeto):'–')+'</td><td style="'+nw+';color:#c46be8">'+(d.valorContratado?fmtBRL(d.valorContratado):'–')+'</td><td style="'+nw+';color:#3dbb77">'+(d.valorExec?fmtBRL(d.valorExec):'–')+'</td><td style="'+nw+'">'+liq+'</td><td style="'+nw+'">'+eco+'</td><td style="'+nw+'">'+sal+'</td></tr>';}).join('')||'<tr><td colspan="12" style="text-align:center;color:#8a96ab;padding:20px">Sem dados</td></tr>';
 }
 
 // ══════════════════════════════════════════════════════════════
