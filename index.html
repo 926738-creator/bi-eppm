@@ -387,7 +387,7 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
         <select id="filtEntObj" onchange="requestAnimationFrame(renderChartEntregas)"><option value="">Top 5 por valor</option></select>
       </div>
       <div class="charts-grid">
-        <div class="chart-card col-12"><div class="chart-title" id="chartEntregasTitle">Qtd Planejada vs Executada</div><div class="chart-wrap" style="height:280px"><canvas id="chartEntregas"></canvas></div></div>
+        <div class="chart-card col-12"><div class="chart-title" id="chartEntregasTitle">Qtd Planejada vs Executada</div><div id="chartEntregasNota" style="font-size:10px;color:#8a96ab;margin:-4px 0 6px"></div><div class="chart-wrap" style="height:280px"><canvas id="chartEntregas"></canvas></div></div>
       </div>
       <div class="chart-card col-12" style="margin-top:0">
         <div class="chart-title">Detalhamento por Projeto</div>
@@ -1184,8 +1184,17 @@ function renderChartEntregas(){
     labels=top5.map(e=>e[0]);planData=top5.map(e=>e[1].plan);execData=top5.map(e=>e[1].exec);
     if(titleEl)titleEl.textContent='Qtd Planejada vs Executada — '+eixo+' · Top 5 por Valor';
   }
+  // Escala por item: objetos com quantidade > 10.000 são exibidos em milhares (×1.000) para não achatar os demais
+  const LIM_ESC=10000;
+  const rawPlan=planData.slice(),rawExec=execData.slice();
+  const fator=labels.map((l,i)=>labels.length>1&&Math.max(rawPlan[i]||0,rawExec[i]||0)>LIM_ESC?1000:1);
+  planData=planData.map((v,i)=>v/fator[i]);execData=execData.map((v,i)=>v/fator[i]);
+  const rawLabels=labels.slice();
+  labels=labels.map((l,i)=>fator[i]>1?l+' (×1.000)':l);
+  const notaEl=document.getElementById('chartEntregasNota');
+  if(notaEl)notaEl.textContent=fator.some(f=>f>1)?'Itens marcados com (×1.000) estão em milhares de unidades; passe o mouse para ver a quantidade real.':'';
   destroyChart('chartEntregas');
-  charts['chartEntregas']=new Chart(document.getElementById('chartEntregas').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Qtd Planejada',data:planData,backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Qtd Executada',data:execData,backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return v>=1000?fmtM(v):v;}}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}},plugins:{...CD.plugins,legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.x.toLocaleString('pt-BR');}}}}}});
+  charts['chartEntregas']=new Chart(document.getElementById('chartEntregas').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Qtd Planejada',data:planData,backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Qtd Executada',data:execData,backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return v>=1000?fmtM(v):v;}}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}},plugins:{...CD.plugins,legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){const i=ctx.dataIndex,real=(ctx.datasetIndex===0?rawPlan:rawExec)[i]||0;return ctx.dataset.label+': '+real.toLocaleString('pt-BR')+(fator[i]>1?' (exibido ×1.000: '+ctx.parsed.x.toLocaleString('pt-BR',{maximumFractionDigits:1})+')':'');}}}}}});
 }
 function renderEntregas(){
   const data=filteredData.filter(d=>d.statusMarco!=='Cancelado');
