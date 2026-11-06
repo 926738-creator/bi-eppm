@@ -353,7 +353,7 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
           <li><b>Estratégico:</b> declarado pelo Comandante-Geral ou oriundo de Planos de Comando e diretrizes estratégicas, bem como aquele cuja não realização compromete a continuidade, a segurança ou a capacidade operacional do serviço policial militar em âmbito estadual ou supra-regional, gerando prejuízo à Instituição e não apenas a uma OPM ou localidade.</li>
           <li><b>Institucional:</b> abrangência regional ou estadual, de iniciativa de Diretorias e órgãos do Comando-Geral.</li>
           <li><b>Local:</b> abrangência local, de iniciativa dos comandos locais.</li>
-          <li>Quando a coluna <i>Abrangência</i> da planilha está preenchida, ela prevalece. Caso contrário, aplica-se a regra padrão: munições, radiocomunicação, fardamento, TASER, servidor de TI, APH tático, coletes e renovação de frota do RMV (exceto viatura isolada) e computadores do COPOM são estratégicos; os demais, institucionais.</li>
+          <li>Quando a coluna <i>Abrangência</i> da planilha está preenchida, ela prevalece. Caso contrário, aplica-se a regra padrão: munições, radiocomunicação, fardamento, TASER, APH tático, coletes e renovação de frota do RMV (exceto viatura isolada) e computadores do COPOM são estratégicos; informática (notebooks, computadores e servidor) é institucional; os demais, institucionais.</li>
         </ul>
         <h4>Fase do ciclo de vida (art. 8º)</h4>
         <ul>
@@ -941,7 +941,7 @@ function classifyPorte(d){
 }
 function abrangPadrao(d){
   const o=nrm(d.objeto);
-  if(/munic|radiocomunica|fardamento|taser|servidor|aph tatico/.test(o))return'Estratégico';
+  if(/munic|radiocomunica|fardamento|taser|aph tatico/.test(o))return'Estratégico';
   if(d.programa==='RMV'){
     if(o.includes('viatura')&&d.qtdPlano!==1)return'Estratégico';
     if(o.includes('colete'))return'Estratégico';
@@ -1167,6 +1167,8 @@ function onFiltEntEixo(){
   objs.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;sel.appendChild(op);});
   requestAnimationFrame(()=>requestAnimationFrame(renderChartEntregas));
 }
+// Quantidade planejada = quantidade do projeto (fallback: quantidade do plano, quando o projeto não tem)
+const qPlan=d=>d.qtdProjeto>0?d.qtdProjeto:(d.qtdPlano||0);
 function renderChartEntregas(){
   const eixo=document.getElementById('filtEntEixo').value;
   const objSel=document.getElementById('filtEntObj').value;
@@ -1175,11 +1177,11 @@ function renderChartEntregas(){
   const titleEl=document.getElementById('chartEntregasTitle');
   if(objSel){
     const rows=base.filter(d=>d.objeto===objSel);
-    labels=[objSel];planData=[rows.reduce((s,d)=>s+d.qtdPlano,0)];execData=[rows.reduce((s,d)=>s+d.qtdExecutada,0)];
+    labels=[objSel];planData=[rows.reduce((s,d)=>s+qPlan(d),0)];execData=[rows.reduce((s,d)=>s+d.qtdExecutada,0)];
     if(titleEl)titleEl.textContent='Qtd Planejada vs Executada — '+eixo+' · '+objSel;
   } else {
     const objMap={};
-    base.forEach(d=>{if(!d.objeto)return;if(!objMap[d.objeto])objMap[d.objeto]={plan:0,exec:0,vp:0};objMap[d.objeto].plan+=d.qtdPlano;objMap[d.objeto].exec+=d.qtdExecutada;objMap[d.objeto].vp+=d.valorProjeto;});
+    base.forEach(d=>{if(!d.objeto)return;if(!objMap[d.objeto])objMap[d.objeto]={plan:0,exec:0,vp:0};objMap[d.objeto].plan+=qPlan(d);objMap[d.objeto].exec+=d.qtdExecutada;objMap[d.objeto].vp+=d.valorProjeto;});
     const top5=Object.entries(objMap).sort((a,b)=>b[1].vp-a[1].vp).slice(0,5);
     labels=top5.map(e=>e[0]);planData=top5.map(e=>e[1].plan);execData=top5.map(e=>e[1].exec);
     if(titleEl)titleEl.textContent='Qtd Planejada vs Executada — '+eixo+' · Top 5 por Valor';
@@ -1194,7 +1196,7 @@ function renderChartEntregas(){
   const notaEl=document.getElementById('chartEntregasNota');
   if(notaEl)notaEl.textContent=fator.some(f=>f>1)?'Itens marcados com (×1.000) estão em milhares de unidades; passe o mouse para ver a quantidade real.':'';
   destroyChart('chartEntregas');
-  charts['chartEntregas']=new Chart(document.getElementById('chartEntregas').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Qtd Planejada',data:planData,backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Qtd Executada',data:execData,backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return v>=1000?fmtM(v):v;}}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}},plugins:{...CD.plugins,legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){const i=ctx.dataIndex,real=(ctx.datasetIndex===0?rawPlan:rawExec)[i]||0;return ctx.dataset.label+': '+real.toLocaleString('pt-BR')+(fator[i]>1?' (exibido ×1.000: '+ctx.parsed.x.toLocaleString('pt-BR',{maximumFractionDigits:1})+')':'');}}}}}});
+  charts['chartEntregas']=new Chart(document.getElementById('chartEntregas').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Qtd Planejada (projeto)',data:planData,backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#c9a84c',borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Qtd Executada',data:execData,backgroundColor:'rgba(61,187,119,0.7)',borderColor:'#3dbb77',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:function(v){return v>=1000?fmtM(v):v;}}},y:{grid:{display:false},ticks:{color:'#d8dde8',font:{size:10},maxRotation:0}}},plugins:{...CD.plugins,legend:{position:'top',labels:{color:'#d8dde8',font:{family:'Barlow',size:11},boxWidth:12}},tooltip:{...CD.plugins.tooltip,callbacks:{label:function(ctx){const i=ctx.dataIndex,real=(ctx.datasetIndex===0?rawPlan:rawExec)[i]||0;return ctx.dataset.label+': '+real.toLocaleString('pt-BR')+(fator[i]>1?' (exibido ×1.000: '+ctx.parsed.x.toLocaleString('pt-BR',{maximumFractionDigits:1})+')':'');}}}}}});
 }
 function renderEntregas(){
   const data=filteredData.filter(d=>d.statusMarco!=='Cancelado');
