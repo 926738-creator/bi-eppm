@@ -332,7 +332,7 @@ footer{text-align:center;padding:14px;color:var(--gray);font-size:10px;letter-sp
       </div>
       <div class="charts-grid">
         <div class="chart-card col-6"><div class="chart-title">Tipo do Projeto (art. 3º, XIX)</div><div class="chart-wrap" style="height:220px"><canvas id="chartTipo"></canvas></div></div>
-        <div class="chart-card col-6"><div class="chart-title">Valor por Ano e Programa (R$)</div><div class="chart-wrap" style="height:220px"><canvas id="chartValorAno"></canvas></div></div>
+        <div class="chart-card col-6"><div class="chart-title" id="chartValorAnoTitle">Valor do Plano por Ano e Programa (R$)</div><div class="chart-wrap" style="height:220px"><canvas id="chartValorAno"></canvas></div></div>
       </div>
       <div class="section-hdr">Portfólio por Família de Objeto — art. 21, §5º</div>
       <div class="filter-bar">
@@ -1026,9 +1026,16 @@ function renderPortfolioCharts(){
   hBar('chartTipo',tL,tL.map(t=>tp[t]),tL.map(t=>t==='A classificar'?'#e05252':'rgba(201,168,76,0.75)'),ctx=>`${ctx.parsed.x} projeto(s) · R$ ${fmtM(tv[ctx.label])}`);
   // Valor por ano e programa
   destroyChart('chartValorAno');
-  const progs=[...new Set(at.map(d=>d.programa).filter(Boolean))].sort();
-  const anos=[...new Set(at.map(d=>d.ano).filter(Boolean))].sort();
-  charts['chartValorAno']=new Chart(document.getElementById('chartValorAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:progs.map(p=>({label:p,data:anos.map(a=>at.filter(d=>d.programa===p&&d.ano===a).reduce((s,d)=>s+d.valor,0)),backgroundColor:hexAlpha(PROG_COLORS[p]||'#c9a84c',0.7),borderColor:PROG_COLORS[p]||'#c9a84c',borderWidth:1,borderRadius:4,borderSkipped:false}))},options:{...CD,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{stacked:true,grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>'R$ '+fmtM(v)}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: R$ ${fmtM(ctx.parsed.y)}`}}}}});
+  const gv=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  const fTAv=gv('filterTA');
+  const usaOf=!['filterObjeto','filterAplicacao','filterStatus','filterAbrang','filterTipo','filterPorte'].some(id=>gv(id)); // só Ano/Programa/TA
+  const ttl=document.getElementById('chartValorAnoTitle');if(ttl)ttl.textContent=usaOf?'Valor do Plano por Ano e Programa (R$) — plano oficial PM':'Valor do Plano por Ano e Programa (R$) — soma dos itens filtrados';
+  let progs=[...new Set(at.map(d=>d.programa).filter(Boolean))].sort();
+  let anos=[...new Set(at.map(d=>d.ano).filter(Boolean))].sort();
+  if(usaOf){const fa=gv('filterAno'),fp=gv('filterPrograma');
+    progs=Object.keys(PLANOS_FESP).filter(p=>!fp||p===fp).sort();
+    anos=[...new Set(progs.flatMap(p=>Object.keys(PLANOS_FESP[p]).map(Number)))].filter(a=>(!fa||String(a)===fa)&&(!fTAv||progs.some(p=>(PLANOS_FESP[p][a]||{}).ta===fTAv))).sort();}
+  charts['chartValorAno']=new Chart(document.getElementById('chartValorAno').getContext('2d'),{type:'bar',data:{labels:anos,datasets:progs.map(p=>({label:p,data:anos.map(a=>{if(usaOf){const v=planoOficialSoma({prog:p,ano:a,ta:fTAv});if(v!==null)return v;}return at.filter(d=>d.programa===p&&d.ano===a).reduce((s,d)=>s+d.valor,0);}),backgroundColor:hexAlpha(PROG_COLORS[p]||'#c9a84c',0.7),borderColor:PROG_COLORS[p]||'#c9a84c',borderWidth:1,borderRadius:4,borderSkipped:false}))},options:{...CD,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#d8dde8',font:{size:11}}},y:{stacked:true,grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8a96ab',font:{size:10},callback:v=>'R$ '+fmtM(v)}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>`${ctx.dataset.label}: R$ ${fmtM(ctx.parsed.y)}`}}}}});
 }
 
 // ── Famílias de objeto (cards) ───────────────────────────────
@@ -1073,6 +1080,9 @@ function specsDe(fam,rows){
   }
   return[...set];
 }
+// Valor do projeto (fallback: valor do plano do item, quando o projeto ainda não tem valor)
+const vProj=d=>d.valorProjeto>0?d.valorProjeto:(d.valor||0);
+const vProjFallback=d=>!(d.valorProjeto>0)&&d.valor>0;
 function buildFamilias(rows){
   const m={};
   rows.forEach(d=>{const f=familiaDe(d);(m[f]=m[f]||[]).push(d);});
@@ -1081,7 +1091,7 @@ function buildFamilias(rows){
     const qtd=its.reduce((s,d)=>s+(d.qtdPlano||0),0);
     const nEst=its.filter(d=>d.abrang==='Estratégico').length;
     const fases={};its.forEach(d=>{fases[d.fase]=(fases[d.fase]||0)+1;});
-    return{nome,itens:its.sort((a,b)=>b.ano-a.ano||b.valor-a.valor),valor:its.reduce((s,d)=>s+d.valor,0),exec:its.reduce((s,d)=>s+d.valorExec,0),
+    return{nome,itens:its.sort((a,b)=>b.ano-a.ano||vProj(b)-vProj(a)),valor:its.reduce((s,d)=>s+vProj(d),0),nFb:its.filter(vProjFallback).length,exec:its.reduce((s,d)=>s+d.valorExec,0),
       qtd,um:ums.length===1?ums[0]:'',nEst,est:nEst>0,specs:specsDe(nome,its),fases,
       progs:[...new Set(its.map(d=>d.programa))].sort(),tipo:its[0].tipo,anos:[Math.min(...its.map(d=>d.ano)),Math.max(...its.map(d=>d.ano))]};
   }).sort((a,b)=>(b.est-a.est)||(b.valor-a.valor));
@@ -1096,7 +1106,7 @@ function renderPortfolioTable(){
   const rows=pfRows();const fams=buildFamilias(rows);
   const q=(document.getElementById('pfSearch')||{}).value||'';
   const prov=allData.filter(d=>d.codigoProv).length,regra=allData.filter(d=>d.abrangOrigem==='regra').length;
-  let note=`<b>${fams.length}</b> família(s) de objeto · <b>${rows.length}</b> projeto(s) ativo(s) · R$ ${fmtM(rows.reduce((s,d)=>s+d.valor,0))}. Cancelados e apensados não entram nos cards.`;
+  let note=`<b>${fams.length}</b> família(s) de objeto · <b>${rows.length}</b> projeto(s) ativo(s) · R$ ${fmtM(rows.reduce((s,d)=>s+vProj(d),0))} em valor de projeto (sem valor de projeto, usa o do plano do item, marcado com †). Cancelados e apensados não entram nos cards.`;
   if(q)note+=rows.length?` Resultado para “${esc(q)}”.`:` <b>Nada encontrado para “${esc(q)}” — o objeto não consta do portfólio FESP.</b>`;
   const pend=[];if(prov)pend.push(`${prov} sem <i>Código do Projeto</i> (código provisório *)`);if(regra)pend.push(`${regra} com abrangência pela regra padrão`);
   if(pend.length)note+=' Pendências de cadastro: '+pend.join('; ')+'.';
@@ -1108,15 +1118,15 @@ function renderPortfolioTable(){
     const ab=f.est?(f.nEst===n?'<span class="badge badge-estrategico">⭐ Estratégico</span>':`<span class="badge badge-estrategico">⭐ Estratégico · ${f.nEst} de ${n}</span>`):'<span class="badge badge-institucional">Institucional</span>';
     const pct=f.valor?Math.round(f.exec/f.valor*100):0;
     const fasesHtml=FASES_IG.filter(x=>f.fases[x]).map(x=>`<span class="fam-fase"><i style="background:${FASE_IG_COLORS[x]}"></i>${f.fases[x]} ${x.toLowerCase()}</span>`).join('');
-    const det=f.itens.map(d=>`<tr><td><span class="pf-code">${esc(d.codigo)}${d.codigoProv?'<span class="pf-prov">*</span>':''}</span></td><td style="color:${PROG_COLORS[d.programa]||'#c9a84c'};font-weight:600">${d.programa}</td><td>${d.ano}</td><td class="pf-obj">${esc(d.descricao||d.objeto)}${d.municipios?`<div style="font-size:10px;color:#8a96ab">${esc(trunc(d.municipios,80))}</div>`:''}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):'–'}</td><td>${faseBadge(d.fase)}<div style="font-size:10px;color:#8a96ab;margin-top:2px">${esc(d.marco)||''}</div></td><td>${fmtBRL(d.valor)}</td><td>${sgpeCell(d)!=='–'?sgpeCell(d):(d.sgpeProjeto?esc(d.sgpeProjeto):'–')}</td></tr>`).join('');
+    const det=f.itens.map(d=>`<tr><td><span class="pf-code">${esc(d.codigo)}${d.codigoProv?'<span class="pf-prov">*</span>':''}</span></td><td style="color:${PROG_COLORS[d.programa]||'#c9a84c'};font-weight:600">${d.programa}</td><td>${d.ano}</td><td class="pf-obj">${esc(d.descricao||d.objeto)}${d.municipios?`<div style="font-size:10px;color:#8a96ab">${esc(trunc(d.municipios,80))}</div>`:''}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):'–'}</td><td>${faseBadge(d.fase)}<div style="font-size:10px;color:#8a96ab;margin-top:2px">${esc(d.marco)||''}</div></td><td>${fmtBRL(vProj(d))}${vProjFallback(d)?' †':''}</td><td>${sgpeCell(d)!=='–'?sgpeCell(d):(d.sgpeProjeto?esc(d.sgpeProjeto):'–')}</td></tr>`).join('');
     return`<div class="fam-card${f.est?' fam-est':''}">
       <div class="fam-head"><div class="fam-name"><span class="fam-icon">${FAM_ICON[f.nome]||'📦'}</span>${esc(f.nome)}</div>${ab}</div>
-      <div class="fam-val">R$ ${fmtM(f.valor)}</div>
+      <div class="fam-val">R$ ${fmtM(f.valor)}</div><div class="fam-meta" style="margin-top:-2px">valor dos projetos${f.nFb?` · ${f.nFb} pelo valor do plano †`:''}</div>
       <div class="fam-meta">${n} projeto${n>1?'s':''}${fmtQtd(f)?' · '+fmtQtd(f):''} · ${f.progs.join(', ')} · ${f.anos[0]===f.anos[1]?f.anos[0]:f.anos[0]+'–'+f.anos[1]}</div>
       ${f.specs.length?`<div class="fam-specs">${f.specs.map(s=>`<span>${esc(s)}</span>`).join('')}</div>`:''}
       <div class="fam-exec"><div class="prog-exec"><div class="prog-exec-fill ${pct>=100?'':pct<30?'danger':pct<70?'warn':''}" style="width:${Math.min(pct,100)}%"></div></div><span>${f.exec?'Executado R$ '+fmtM(f.exec)+' · '+pct+'%':'Sem execução financeira registrada'}</span></div>
       <div class="fam-fases">${fasesHtml}</div>
-      <details class="fam-det"><summary>Ver projetos (${n})</summary><div class="table-wrap" style="max-height:340px"><table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Fase IG</th><th>Valor plano</th><th>SGP-e</th></tr></thead><tbody>${det}</tbody></table></div></details>
+      <details class="fam-det"><summary>Ver projetos (${n})</summary><div class="table-wrap" style="max-height:340px"><table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Fase IG</th><th>Valor projeto</th><th>SGP-e</th></tr></thead><tbody>${det}</tbody></table></div></details>
     </div>`;}).join('');
 }
 
@@ -1133,12 +1143,12 @@ function printPortfolio(){
   const filtros=[['filterAno','Ano'],['filterPrograma','Programa'],['filterTA','TA'],['filterObjeto','Objeto'],['filterAplicacao','Aplicação'],['filterStatus','Fase'],['filterAbrang','Abrangência'],['filterTipo','Tipo'],['filterPorte','Porte'],['pfSearch','Busca']].map(([id,l])=>{const e=document.getElementById(id);return e&&e.value?`${l}: ${e.value}`:null;}).filter(Boolean);
   let el=document.getElementById('pfPrint');if(!el){el=document.createElement('div');el.id='pfPrint';document.body.appendChild(el);}
   el.innerHTML=`<div class="pp-logos"><img src="assets/logo-pmsc.png" alt="PMSC"><img src="assets/logo-eppm.png" alt="EPPM"></div><h1>Polícia Militar de Santa Catarina — Portfólio de Projetos (IG 10-801, art. 21, §5º)</h1>
-  <div class="pp-sub">EMG / Escritório de Projetos da Polícia Militar · Fonte: Planilha FESP Fundo a Fundo · Emitido em ${new Date().toLocaleString('pt-BR')} · ${filtros.length?'Filtros: '+esc(filtros.join(' · ')):'Sem filtros'} · ${fams.length} família(s), ${rows.length} projeto(s) ativo(s) · Valor do plano: ${fmtBRL(rows.reduce((s,d)=>s+d.valor,0))}</div>
-  <table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Abrangência</th><th>Fase IG</th><th>Último marco</th><th>Valor plano</th><th>Valor exec.</th><th>SGP-e</th></tr></thead><tbody>
-  ${fams.map(f=>`<tr class="pp-fam"><td colspan="11"><b>${esc(f.nome)}</b> — ${f.est?'Estratégico'+(f.nEst<f.itens.length?` (${f.nEst} de ${f.itens.length})`:''):'Institucional'} · ${f.itens.length} projeto(s) · ${fmtBRL(f.valor)}${fmtQtd(f)?' · '+fmtQtd(f):''}${f.specs.length?' · '+esc(f.specs.join(', ')):''}</td></tr>`+
-    f.itens.map(d=>`<tr><td>${esc(d.codigo)}${d.codigoProv?'*':''}</td><td>${esc(d.programa)}</td><td>${d.ano}</td><td>${esc(d.descricao||d.objeto)}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):''}</td><td>${esc(d.abrang)}</td><td>${esc(d.fase)}</td><td>${esc(d.marco)}</td><td>${fmtBRL(d.valor)}</td><td>${d.valorExec?fmtBRL(d.valorExec):'–'}</td><td>${esc(d.sgpeExec||d.sgpeProjeto)}</td></tr>`).join('')).join('')}
+  <div class="pp-sub">EMG / Escritório de Projetos da Polícia Militar · Fonte: Planilha FESP Fundo a Fundo · Emitido em ${new Date().toLocaleString('pt-BR')} · ${filtros.length?'Filtros: '+esc(filtros.join(' · ')):'Sem filtros'} · ${fams.length} família(s), ${rows.length} projeto(s) ativo(s) · Valor dos projetos: ${fmtBRL(rows.reduce((s,d)=>s+vProj(d),0))}</div>
+  <table><thead><tr><th>Código</th><th>Prog.</th><th>Ano</th><th>Descrição</th><th>Qtd</th><th>Abrangência</th><th>Fase IG</th><th>Último marco</th><th>Valor projeto</th><th>Valor exec.</th><th>SGP-e</th></tr></thead><tbody>
+  ${fams.map(f=>`<tr class="pp-fam"><td colspan="11"><b>${esc(f.nome)}</b> — ${f.est?'Estratégico'+(f.nEst<f.itens.length?` (${f.nEst} de ${f.itens.length})`:''):'Institucional'} · ${f.itens.length} projeto(s) · ${fmtBRL(f.valor)} (projetos)${fmtQtd(f)?' · '+fmtQtd(f):''}${f.specs.length?' · '+esc(f.specs.join(', ')):''}</td></tr>`+
+    f.itens.map(d=>`<tr><td>${esc(d.codigo)}${d.codigoProv?'*':''}</td><td>${esc(d.programa)}</td><td>${d.ano}</td><td>${esc(d.descricao||d.objeto)}</td><td>${d.qtdPlano?fmtNum(d.qtdPlano)+' '+esc(d.um):''}</td><td>${esc(d.abrang)}</td><td>${esc(d.fase)}</td><td>${esc(d.marco)}</td><td>${fmtBRL(vProj(d))}${vProjFallback(d)?' †':''}</td><td>${d.valorExec?fmtBRL(d.valorExec):'–'}</td><td>${esc(d.sgpeExec||d.sgpeProjeto)}</td></tr>`).join('')).join('')}
   </tbody></table>
-  <div class="pp-foot">* Código provisório (sem "Código do Projeto" na planilha). Cancelados e apensados não constam. Abrangência conforme art. 3º, III a V; fase conforme art. 8º. A presença no portfólio confere conhecimento e autorização prévia, não substituindo a aprovação do projeto.</div>`;
+  <div class="pp-foot">* Código provisório (sem "Código do Projeto" na planilha). † Sem valor de projeto: usado o valor do plano do item. Cancelados e apensados não constam. Abrangência conforme art. 3º, III a V; fase conforme art. 8º. A presença no portfólio confere conhecimento e autorização prévia, não substituindo a aprovação do projeto.</div>`;
   document.body.classList.add('print-pf');
   const done=()=>{document.body.classList.remove('print-pf');window.removeEventListener('afterprint',done);};
   window.addEventListener('afterprint',done);
